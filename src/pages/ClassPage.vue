@@ -1,51 +1,79 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-const slide = ref(1);
-const contacts = [
-  {
-    id: 1,
-    name: 'Strawhat',
-    email: 'rjedrzej0@discuz.net',
-    letter: 'R',
-  },
-  {
-    id: 2,
-    name: 'Redhair',
-    email: 'rjedrzej0@discuz.net',
-    letter: 'R',
-  },
-];
+import { uid } from 'quasar';
+import { useClassStore } from 'src/stores/class-store';
+import { computed, ref } from 'vue';
+
+const classStore = useClassStore();
+const classes = computed(() => {
+  return classStore.classes;
+});
+const showNewClassDialog = ref(false);
+const className = ref('');
+function addNewClass() {
+  showNewClassDialog.value = true;
+}
+function saveClass() {
+  classStore.saveClass({
+    key: uid(),
+    name: className.value,
+  });
+  className.value = '';
+  showNewClassDialog.value = false;
+}
 </script>
 <template>
-  <div class="q-pa-md">
-    <q-carousel animated v-model="slide" arrows navigation infinite>
-      <q-carousel-slide :name="1" img-src="https://cdn.quasar.dev/img/mountains.jpg" />
-      <q-carousel-slide :name="2" img-src="https://cdn.quasar.dev/img/parallax1.jpg" />
-      <q-carousel-slide :name="3" img-src="https://cdn.quasar.dev/img/parallax2.jpg" />
-      <q-carousel-slide :name="4" img-src="https://cdn.quasar.dev/img/quasar.jpg" />
-    </q-carousel>
+  <q-page>
+    <div class="q-pa-md">
+      <q-list bordered>
+        <q-item
+          v-for="theClass in classes"
+          :key="theClass.key"
+          class="q-my-sm"
+          clickable
+          v-ripple
+          :to="{
+            name: 'attendance',
+            params: { classKey: theClass.key },
+          }"
+        >
+          <q-item-section avatar>
+            <q-avatar color="primary" text-color="white">
+              {{ theClass.name[0] }}
+            </q-avatar>
+          </q-item-section>
 
-    <q-toolbar class="bg-primary text-white shadow-2">
-      <q-toolbar-title>Classes</q-toolbar-title>
-    </q-toolbar>
+          <q-item-section>
+            <q-item-label>{{ theClass.name }}</q-item-label>
+          </q-item-section>
 
-    <q-list bordered>
-      <q-item v-for="contact in contacts" :key="contact.id" class="q-my-sm" clickable v-ripple>
-        <q-item-section avatar>
-          <q-avatar color="primary" text-color="white">
-            {{ contact.letter }}
-          </q-avatar>
-        </q-item-section>
-
-        <q-item-section>
-          <q-item-label>{{ contact.name }}</q-item-label>
-          <q-item-label caption lines="1">{{ contact.email }}</q-item-label>
-        </q-item-section>
-
-        <q-item-section side>
-          <q-icon name="chat_bubble" color="green" />
-        </q-item-section>
-      </q-item>
-    </q-list>
-  </div>
+          <q-item-section side>
+            <q-icon name="chat_bubble" color="green" />
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </div>
+    <q-page-sticky position="bottom" :offset="[0, 0]">
+      <q-btn fab icon="add" color="accent" @click="addNewClass()" />
+    </q-page-sticky>
+    <q-dialog position="standard" persistent v-model="showNewClassDialog">
+      <q-card>
+        <q-form @submit="saveClass()">
+          <q-card-section>
+            <q-input
+              v-model="className"
+              :rules="[
+                (v) => (v && /^[a-z]/i.test(v)) || 'Should Start with a letter',
+                (v) => (v && v.length > 3) || 'Should at least 4 characters',
+              ]"
+              placeholder="Class Name"
+            />
+          </q-card-section>
+          <q-card-actions>
+            <q-btn icon="cancel" color="secondary" v-close-popup>Cancel</q-btn>
+            <q-btn icon="save" type="submit">Save</q-btn>
+          </q-card-actions>
+        </q-form>
+      </q-card>
+    </q-dialog>
+  </q-page>
 </template>

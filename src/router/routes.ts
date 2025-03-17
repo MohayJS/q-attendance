@@ -6,7 +6,9 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('pages/IndexPage.vue') },
-      { path: 'class', component: () => import('pages/ClassPage.vue') }
+      { name: 'classes', path: 'class', component: () => import('pages/ClassPage.vue') },
+      { name: 'attendance', path: 'attendance/:classKey', component: () => import('pages/AttendancePage.vue') },
+      { name: 'rollCall', path: 'roll-call/:classKey', component: () => import('pages/RollCallPage.vue') }
     ],
   },
   {
