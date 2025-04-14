@@ -1,5 +1,9 @@
 # Quasar App (q-attendance)
 
+**Access the deployed web app** 
+```
+linen-walker-360706.web.app
+```
 A Quasar Project
 
 ## Install the dependencies
