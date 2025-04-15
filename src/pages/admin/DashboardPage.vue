@@ -93,8 +93,8 @@ onUnmounted(() => {
 
       <div class="cardContainer">
         <q-card class="card">
-          <q-card-section class="cardSection">
-            <div style="display: flex;">
+          <q-card-section>
+            <div style="display: flex; gap: 1rem;">
               <q-icon class="icon" name="people" color="primary" size="2rem" />
               <div>
                 <h4 class="no-margin"><strong>120</strong></h4>
@@ -105,8 +105,8 @@ onUnmounted(() => {
         </q-card>
 
         <q-card class="card">
-          <q-card-section class="cardSection">
-            <div style="display: flex;">
+          <q-card-section>
+            <div style="display: flex; gap: 1rem;">
               <q-icon class="icon" name="today" color="primary" size="2rem" />
               <div>
                 <h4 class="no-margin"><strong>20</strong></h4>
@@ -117,8 +117,8 @@ onUnmounted(() => {
         </q-card>
 
         <q-card class="card">
-          <q-card-section class="cardSection">
-            <div style="display: flex;">
+          <q-card-section>
+            <div style="display: flex; gap: 1rem;">
               <q-icon class="icon" name="check" color="primary" size="2rem" />
               <div>
                 <h4 class="no-margin"><strong>450</strong></h4>
@@ -129,8 +129,8 @@ onUnmounted(() => {
         </q-card>
 
         <q-card class="card">
-          <q-card-section class="cardSection">
-            <div style="display: flex;">
+          <q-card-section>
+            <div style="display: flex; gap: 1rem;">
               <q-icon class="icon" name="clear" color="primary" size="2rem" />
               <div>
                 <h4 class="no-margin"><strong>30</strong></h4>
@@ -154,27 +154,27 @@ onUnmounted(() => {
             </thead>
             <tbody>
               <tr>
-                <td>John Doe</td>
+                <td>Monkey D. Luffy</td>
                 <td>2 hours ago</td>
                 <td>Present</td>
               </tr>
               <tr>
-                <td>Jane Smith</td>
+                <td>Roronoa Zoro</td>
                 <td>3 hours ago</td>
                 <td>Absent</td>
               </tr>
               <tr>
-                <td>Mark Brown</td>
+                <td>Nami</td>
                 <td>5 hours ago</td>
                 <td>Present</td>
               </tr>
               <tr>
-                <td>Emma Wilson</td>
+                <td>Sanji</td>
                 <td>6 hours ago</td>
                 <td>Present</td>
               </tr>
               <tr>
-                <td>Alice Johnson</td>
+                <td>Usopp</td>
                 <td>7 hours ago</td>
                 <td>Present</td>
               </tr>
