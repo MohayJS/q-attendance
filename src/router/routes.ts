@@ -8,20 +8,23 @@ const routes: RouteRecordRaw[] = [
       { path: '', component: () => import('pages/HomePage.vue') },
       { name: 'classes', path: 'class', component: () => import('pages/ClassPage.vue') },
       { name: 'attendance', path: 'attendance/:classKey', component: () => import('pages/AttendancePage.vue') },
-      { name: 'rollCall', path: 'roll-call/:classKey', component: () => import('pages/RollCallPage.vue') }
-    ],
+      { name: 'rollCall', path: 'roll-call/:classKey', component: () => import('pages/RollCallPage.vue') },
+      {name: 'signin', path: '/login',component: () => import ('pages/auth/LoginPage.vue'),}
+
+    ]
   },
+
+
+
+  //loginPage
   {
     path: '/auth',
     component: () => import('layouts/AuthLayout.vue'),
     children: [
-      {
-        path: 'login',
-        component: () => import('pages/auth/LoginPage.vue')
-      }
+    {path: 'login', component: () => import('pages/auth/LoginPage.vue')},
+
     ]
   },
-
   // Always leave this as last one,
   // but you can also remove it
   {
