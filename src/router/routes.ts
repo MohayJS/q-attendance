@@ -14,6 +14,39 @@ const routes: RouteRecordRaw[] = [
     ]
   },
 
+  // Student Page
+  {
+    path: '/student',
+    component: () => import('layouts/StudentLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/student/StudentDashboard.vue') },
+    ]
+  },
+  // Teacher Page
+  {
+    path: '/teacher',
+    component: () => import('layouts/TeacherLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/teacher/TeacherDashboard.vue') },
+    ]
+  },
+  // Supervisor Page
+  {
+    path: '/supervisor',
+    component: () => import('layouts/SupervisorLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/supervisor/SupervisorDashboard.vue') },
+    ]
+  },
+
+  // Admin Page
+  {
+    path: '/admin',
+    component: () => import('layouts/AdminLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/admin/DashboardPage.vue')},
+    ]
+  },
 
 
   //loginPage
@@ -25,7 +58,6 @@ const routes: RouteRecordRaw[] = [
 
     ]
   },
-
   // Always leave this as last one,
   // but you can also remove it
   {

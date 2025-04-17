@@ -2,15 +2,19 @@
 import { ref } from 'vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { SessionStorage } from 'quasar';
+import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
+const router = useRouter();
 
 const username = ref('');
 const password = ref('');
-const authStore = useAuthStore();
 
 function onSubmit() {
   const auth = authStore.login(username.value, password.value)
   if (auth) {
     SessionStorage.set("CURRENT_USER", auth)
+    void router.push('/'+auth.role)
   } else {
     alert("Invalid username or password")
   }
