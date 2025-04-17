@@ -7,21 +7,25 @@ export const useAuthStore = defineStore('auth', {
         username: 'student',
         password: 'student',
         role: 'student',
+        status: 'inactive'
       },
       {
         username: 'teacher',
         password: 'teacher',
         role: 'teacher',
+        status: 'active'
       },
       {
         username: 'supervisor',
         password: 'supervisor',
         role: 'supervisor',
+        status: 'pending'
       },
       {
         username: 'admin',
         password: 'admin',
         role: 'admin',
+        status: 'active'
       },
     ],
   }),
@@ -33,7 +37,10 @@ export const useAuthStore = defineStore('auth', {
       const account = this.accounts.find(
         (account) => account.username === username && account.password === password
       );
-      return account || null;
+      if (account) {
+        return account;
+      }
+      return null;
     },
   },
 });

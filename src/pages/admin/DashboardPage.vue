@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import ApexCharts from 'apexcharts';
 import { onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { logout } from 'src/utils/redirect';
+
+const router = useRouter();
 
 const OverAllAttendance = {
   chart: {
@@ -74,6 +78,10 @@ onUnmounted(() => {
     if (chart) chart.destroy();
     if (attendance) attendance.destroy();
 })
+
+function signOff() {
+    logout(router);
+}
 
 </script>
 
@@ -181,8 +189,8 @@ onUnmounted(() => {
             </tbody>
           </q-markup-table>
       </div>
-        
     </div>
+    <q-btn color="primary" label="Logout" @click="signOff" />
 
     <div>
       <router-view />

@@ -7,7 +7,7 @@ const isCurrent_User = ref(SessionStorage.getItem('CURRENT_USER') !== null);
 const router = useRouter();
 
 const signinbutton = () => {
-  router.push('/login').catch(() => {
+  router.push('/auth/login').catch(() => {
   });
 };
 

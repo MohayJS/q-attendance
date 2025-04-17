@@ -9,7 +9,6 @@ const routes: RouteRecordRaw[] = [
       { name: 'classes', path: 'class', component: () => import('pages/ClassPage.vue') },
       { name: 'attendance', path: 'attendance/:classKey', component: () => import('pages/AttendancePage.vue') },
       { name: 'rollCall', path: 'roll-call/:classKey', component: () => import('pages/RollCallPage.vue') },
-      {name: 'signin', path: '/login',component: () => import ('pages/auth/LoginPage.vue'),}
 
     ]
   },
@@ -45,6 +44,15 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/AdminLayout.vue'),
     children: [
       { path: '', component: () => import('pages/admin/DashboardPage.vue')},
+    ]
+  },
+
+  // Status Page
+  {
+    path: '/status',
+    component: () => import('layouts/StatusAccLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/StatusPage.vue') },
     ]
   },
 
