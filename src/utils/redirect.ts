@@ -13,11 +13,14 @@ export function checkStatusAcc(router: Router) {
   } else {
     void router.push('/auth/login');
   }
-
-  return auth;
 }
 
 export function logout(router: Router) {
   SessionStorage.remove('CURRENT_USER');
   void router.push('/auth/login');
+}
+
+export function getAccount() {
+  const auth: { role: string, status: string } | null = SessionStorage.getItem("CURRENT_USER");
+  return auth;
 }
