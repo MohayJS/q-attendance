@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { SessionStorage } from 'quasar';
 import { checkStatusAcc } from 'src/utils/redirect';
@@ -31,11 +31,16 @@ function onSubmit() {
   }
 }
 
+const acc = authStore;
+
 function showAccounts() {
-  const acc = authStore;
   accounts.value = acc.accounts;
   showTable.value = !showTable.value;
 }
+
+onMounted(() => {
+  accounts.value = acc.accounts;
+})
 </script>
 
 <template>

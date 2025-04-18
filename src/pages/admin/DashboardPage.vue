@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import ApexCharts from 'apexcharts';
 import { onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { logout } from 'src/utils/redirect';
-
-const router = useRouter();
 
 const OverAllAttendance = {
   chart: {
@@ -78,26 +74,12 @@ onUnmounted(() => {
     if (chart) chart.destroy();
     if (attendance) attendance.destroy();
 })
-
-function signOff() {
-    logout(router);
-}
-
 </script>
 
 <template>
   <q-page class="q-pa-md admindashboard">
-    <q-card
-      class="my-card text-white q-mb-md"
-      style="background: radial-gradient(circle, #fffcef 0%, #790622 100%)"
-    >
-      <q-card-section>
-        <h1 class="text-h4">Dashboard</h1>
-        <p>Welcome to the admin dashboard!</p>
-      </q-card-section>
-    </q-card>
 
-    <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 1rem;">
 
       <div class="cardContainer">
         <q-card class="card">
@@ -190,7 +172,6 @@ function signOff() {
           </q-markup-table>
       </div>
     </div>
-    <q-btn color="primary" label="Logout" @click="signOff" />
 
     <div>
       <router-view />

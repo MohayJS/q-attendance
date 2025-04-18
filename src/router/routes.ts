@@ -44,6 +44,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/AdminLayout.vue'),
     children: [
       { path: '', component: () => import('pages/admin/DashboardPage.vue')},
+      { path: 'user-approvals', component: () => import('pages/admin/UserApprovals.vue')},
+      { path: 'users', component: () => import('pages/admin/UsersPage.vue')},
     ]
   },
 
