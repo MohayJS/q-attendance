@@ -10,14 +10,12 @@ export function checkStatusAcc(router: Router) {
     } else if (auth.status === 'pending' || auth.status === 'inactive') {
       void router.push('/status');
     }
-  } else {
-    void router.push('/auth/login');
   }
 }
 
 export function logout(router: Router) {
   SessionStorage.remove('CURRENT_USER');
-  void router.push('/auth/login');
+  void router.push('/');
 }
 
 export function getAccount() {

@@ -5,9 +5,15 @@ import { ref } from 'vue';
 
 const isCurrent_User = ref(SessionStorage.getItem('CURRENT_USER') !== null);
 const router = useRouter();
+const alert = ref(false);
 
 const signinbutton = () => {
   router.push('/auth/login').catch(() => {
+  });
+};
+
+const signupbutton = () => {
+  router.push('/auth/register').catch(() => {
   });
 };
 
@@ -37,10 +43,39 @@ const gotoDashboard = () => {
         </div>
         <div v-else>
           <q-btn label="Sign In" color="primary" @click="signinbutton" />
-          <q-btn label="Sign Up" color="brown"/>
+          <q-btn label="Sign Up" color="brown" @click="signupbutton" />
         </div>
       </div>
     </div>
+    
+    <!-- REMOVE THIS LATER -->
+     <div style="position: absolute; top: 80%; left: 50%; transform: translate(-50%,-50%);">
+      <q-btn label="What's new" color="amber" @click="alert = true" />
+     </div>
+    
+
+    <q-dialog v-model="alert">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">What's new</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <ul>
+            <li>Added Sign-up Page (QO-1)</li>
+            <li>Updated Admin Dashboard (QS-12)</li>
+            <li>Added User management page for Admin (QG-0)</li>
+          </ul>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="OK" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <!-- ---------------- -->
+
+
   </q-page>
 </template>
 

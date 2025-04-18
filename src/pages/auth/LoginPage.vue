@@ -23,12 +23,12 @@ const accounts = ref<Accounts[]>([]);
 
 function onSubmit() {
   const auth = authStore.login(username.value, password.value)
-  if (auth) {
-    SessionStorage.set("CURRENT_USER", auth)
-    checkStatusAcc(router);
-  } else {
-    alert("Invalid username or password")
-  }
+    if (auth) {
+      SessionStorage.set("CURRENT_USER", auth)
+      checkStatusAcc(router);
+    } else {
+      alert("Invalid username or password")
+    }
 }
 
 const acc = authStore;
