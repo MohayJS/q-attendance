@@ -58,10 +58,13 @@ const gotoDashboard = () => {
       <q-card>
         <q-card-section>
           <div class="text-h6">What's new</div>
+          <p>4/18/2025 - 10:12pm</p>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
           <ul>
+            <li>Added Teacher Dashboard (QS-8)</li>
+            <li>Added Supervisor Dashboard (QS-11)</li>
             <li>Added Sign-up Page (QO-1)</li>
             <li>Updated Admin Dashboard (QS-12)</li>
             <li>Added User management page for Admin (QG-0)</li>
