@@ -4,10 +4,22 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     accounts: [
       {
+        username: 'user1',
+        password: 'user1',
+        role: 'student',
+        status: 'inactive'
+      },
+      {
+        username: 'user2',
+        password: 'user2',
+        role: 'teacher',
+        status: 'pending'
+      },
+      {
         username: 'student',
         password: 'student',
         role: 'student',
-        status: 'inactive'
+        status: 'active'
       },
       {
         username: 'teacher',
@@ -19,7 +31,7 @@ export const useAuthStore = defineStore('auth', {
         username: 'supervisor',
         password: 'supervisor',
         role: 'supervisor',
-        status: 'pending'
+        status: 'active'
       },
       {
         username: 'admin',

@@ -55,7 +55,11 @@ function showAccounts() {
       </q-card-section>
     </q-card>
 
-    <q-btn label="Show Existing Accounts" color="primary" @click="showAccounts" />
+
+    <div class="flex">
+      <q-btn :label="showTable ? 'Hide Existing Accounts' : 'Show Existing Accounts'" color="primary" @click="showAccounts" />
+      <p>Number of Accounts: {{ accounts.length }}</p>
+    </div>
     <div v-if="showTable">
       <q-markup-table flat bordered class="table-auto">
         <thead>
