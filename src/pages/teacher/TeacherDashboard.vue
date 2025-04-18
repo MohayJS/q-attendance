@@ -36,8 +36,7 @@ function logout() {
      <q-card-section class="text-h6"></q-card-section>
 
 
-
-    
+        <!-- class table panels-->
 
      <h2 style="font-size: 28px; font-weight: bold;">Today's Classes Panel</h2>
   <table border="0" style="margin: 20px auto; border-collapse: collapse; width: 80%; text-align: center; background-color: #f9f9f9;">
@@ -74,9 +73,6 @@ function logout() {
       </tr>
     </tbody>
   </table>
-
-
-
 
 
 
