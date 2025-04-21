@@ -5,7 +5,7 @@ import { ref } from 'vue';
 
 const isCurrent_User = ref(SessionStorage.getItem('CURRENT_USER') !== null);
 const router = useRouter();
-const alert = ref(false);
+// const alert = ref(false);
 
 const signinbutton = () => {
   router.push('/auth/login').catch(() => {
@@ -49,7 +49,7 @@ const gotoDashboard = () => {
     </div>
     
     <!-- REMOVE THIS LATER -->
-     <div style="position: absolute; top: 80%; left: 50%; transform: translate(-50%,-50%);">
+     <!-- <div style="position: absolute; top: 80%; left: 50%; transform: translate(-50%,-50%);">
       <q-btn label="What's new" color="amber" @click="alert = true" />
      </div>
     
@@ -77,7 +77,7 @@ const gotoDashboard = () => {
           <q-btn flat label="OK" color="primary" v-close-popup />
         </q-card-actions>
       </q-card>
-    </q-dialog>
+    </q-dialog> -->
     <!-- ---------------- -->
 
 
