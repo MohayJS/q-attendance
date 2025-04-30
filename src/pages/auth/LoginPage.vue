@@ -131,14 +131,26 @@ function showAccounts() {
   margin: auto;
   width: 100%;
   margin-top: 100px;
+  height: 400px;
 }
 .page-center {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh; /* full screen height */
+  height: 200vh; /* full screen height */
   background-color: #f8f4e1; /* optional background */
   flex-direction: column;
+}
+.msupic{
+  display: block;
+  margin: 0 auto;
+
+}
+.signin-text{
+  color: grey;
+  font-size: 15px;
+  display: block;
+  text-align: center;
 }
 .row {
   justify-content: center;
@@ -170,11 +182,15 @@ function showAccounts() {
 }
 .login-button {
   background-color: #800000;
-  margin-top: 10px;
   color: white;
   align-items: center;
-  display: flex;
-  margin-left: 150px;
+  display: block;
+  margin: 0 auto;
+  margin-top: 20px;
+  font-size: 16px;
+  padding: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 .tableacc {
   width: 100%;
