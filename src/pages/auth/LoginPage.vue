@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { SessionStorage } from 'quasar';
 import { checkStatusAcc } from 'src/utils/redirect';
@@ -22,50 +22,59 @@ interface Accounts {
 const accounts = ref<Accounts[]>([]);
 
 function onSubmit() {
-  const auth = authStore.login(username.value, password.value)
-    if (auth) {
-      SessionStorage.set("CURRENT_USER", auth)
-      checkStatusAcc(router);
-    } else {
-      alert("Invalid username or password")
-    }
+  const auth = authStore.login(username.value, password.value);
+  if (auth) {
+    SessionStorage.set('CURRENT_USER', auth);
+    checkStatusAcc(router);
+  } else {
+    alert('Invalid username or password');
+  }
 }
 
-const acc = authStore;
-
 function showAccounts() {
+  const acc = authStore;
   accounts.value = acc.accounts;
   showTable.value = !showTable.value;
 }
-
-onMounted(() => {
-  accounts.value = acc.accounts;
-})
 </script>
 
 <template>
-  <q-page>
+  <div class="top-border">QUASAR ATTENDANCE SYSTEM</div>
+  <q-page class="page-center">
     <q-card
       class="my-card text-white q-ma-xl"
-      style="background: radial-gradient(circle, #35a2ff 0%, #014a88 100%)"
+      style="background: radial-gradient(circle, #efeeea 0%, #f8f4e1 100%)"
     >
       <q-card-section>
         <q-form @submit="onSubmit">
           <div class="row">
-            <q-input class="col-6" v-model="username" placeholder="username" />
-            <q-input class="col-6" v-model="password" type="password" placeholder="password" />
+            <div class="username-box">
+              <q-input
+                class="col-6"
+                v-model="username"
+                placeholder="Username"
+                style="font-weight: bold"
+              />
+            </div>
+            <div class="username-box">
+              <q-input class="col-6" v-model="password" type="password" placeholder="Password" />
+            </div>
           </div>
-          <q-btn type="submit">Login</q-btn>
+          <q-btn class="login-button" type="submit">Login</q-btn>
         </q-form>
       </q-card-section>
     </q-card>
 
-
     <div class="flex">
-      <q-btn :label="showTable ? 'Hide Existing Accounts' : 'Show Existing Accounts'" color="primary" @click="showAccounts" />
+      <q-btn
+        class="buttontable"
+        :label="showTable ? 'Hide Existing Accounts' : 'Show Existing Accounts'"
+        color="primary"
+        @click="showAccounts"
+      />
       <p>Number of Accounts: {{ accounts.length }}</p>
     </div>
-    <div v-if="showTable">
+    <div class="tableacc" v-if="showTable">
       <q-markup-table flat bordered class="table-auto">
         <thead>
           <tr>
@@ -81,7 +90,17 @@ onMounted(() => {
             <td>{{ acc.password }}</td>
             <td>{{ acc.role }}</td>
             <td>
-              <q-badge :color="acc.status === 'active' ? 'positive' : acc.status === 'inactive' ? 'negative' : 'warning'" > {{ acc.status }} </q-badge>
+              <q-badge
+                :color="
+                  acc.status === 'active'
+                    ? 'positive'
+                    : acc.status === 'inactive'
+                      ? 'negative'
+                      : 'warning'
+                "
+              >
+                {{ acc.status }}
+              </q-badge>
             </td>
           </tr>
         </tbody>
@@ -92,3 +111,71 @@ onMounted(() => {
     </div>
   </q-page>
 </template>
+<style scoped>
+.top-border {
+  border-top: 5px solid #800000; /* blue border */
+  width: 100%;
+  font-weight: bolder;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 30px;
+  font-weight: bold;
+  color: white;
+  background-color: #800000;
+  border-bottom: 3px solid #800000;
+}
+.my-card {
+  max-width: 400px;
+  margin: auto;
+  width: 100%;
+  margin-top: 100px;
+}
+.page-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* full screen height */
+  background-color: #f8f4e1; /* optional background */
+  flex-direction: column;
+}
+.row {
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.username-box {
+  flex: 1;
+  font-weight: bold;
+  width: 100%;
+}
+.passsword-box {
+  flex: 1;
+  font-weight: bold;
+}
+
+.table-auto {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0px;
+  width: 100%;
+}
+.login-button {
+  background-color: #800000;
+  margin-top: 10px;
+  color: white;
+  align-items: center;
+  display: flex;
+  margin-left: 150px;
+}
+.tableacc {
+  width: 100%;
+}
+
+</style>
