@@ -116,7 +116,8 @@ export default defineConfig((ctx) => {
       // Quasar plugins
       plugins: [
         'LocalStorage',
-        'SessionStorage'
+        'SessionStorage',
+        'Notify'
       ]
     },
 
