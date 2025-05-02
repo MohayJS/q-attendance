@@ -67,10 +67,6 @@ function signOff() {
 
 <template>
   <q-page class="q-pa-md student-dashboard">
-    <div class="header">
-      <h1 class="page-title">Student Dashboard</h1>
-      <q-btn color="primary" @click="signOff" class="logout-btn">Logout</q-btn>
-    </div>
 
     <div class="row">
       <div class="col-12 row" style="margin-bottom: 1rem;">
@@ -141,6 +137,7 @@ function signOff() {
       </div>
     </div>
 
+    <q-btn color="primary" @click="signOff" class="logout-btn">Logout</q-btn>
     <div>
       <router-view />
     </div>
