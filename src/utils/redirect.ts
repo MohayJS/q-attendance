@@ -1,4 +1,4 @@
-import { SessionStorage } from 'quasar';
+import { SessionStorage, useQuasar } from 'quasar';
 import type { Router } from 'vue-router';
 
 export function checkStatusAcc(router: Router) {
@@ -12,10 +12,19 @@ export function checkStatusAcc(router: Router) {
     }
   }
 }
-
+const $q = useQuasar();
 export function logout(router: Router) {
-  SessionStorage.remove('CURRENT_USER');
-  void router.push('/');
+  $q.notify({
+    message: 'Are you sure',
+    actions: [
+      {
+        label: 'Yes', handler() {
+          SessionStorage.remove('CURRENT_USER');
+          void router.push('/');
+        },
+      }, { label: 'Meybe' }
+    ]
+  })
 }
 
 export function getAccount() {
