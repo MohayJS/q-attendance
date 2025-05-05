@@ -25,7 +25,10 @@ async function onSubmit() {
     await router.replace('/');
   }
 }
-
+async function continueWithGoogle() {
+  await authStore.loginWithGoogle();
+  await router.replace({ name: 'home' });
+}
 function showAccounts() {
   accounts.value = [];
   showTable.value = !showTable.value;
@@ -58,6 +61,9 @@ function showAccounts() {
           </div>
           <q-btn class="login-button" type="submit">Login</q-btn>
         </q-form>
+        <q-card-actions>
+          <q-btn class="login-button" @click="continueWithGoogle()">Continue with Google</q-btn>
+        </q-card-actions>
       </q-card-section>
     </q-card>
 
