@@ -7,7 +7,7 @@ import {
   signInWithEmailAndPassword, signInWithPopup, signOut, User
 } from "firebase/auth";
 import { getAuth } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocFromCache, getFirestore, setDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocFromCache, getDocs, getFirestore, setDoc } from "firebase/firestore";
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
 import { ClassModel } from 'src/models/class.models';
 import { UserModel } from 'src/models/user.models';
@@ -196,6 +196,21 @@ class FirebaseService {
     }
     return false;
   }
+  async findRecords<C extends CollectionName>(collectionName: C, path?: string): Promise<CollectionTypes[C][]> {
+    let collRef = collection(db, collectionName);
+    if (path) {
+      const parts = path.split('/');
+      const [colName] = parts.splice(1, 1);
+      collRef = collection(db, colName!, [...parts, collectionName].join('/'));
+    }
+    const snapshot = await getDocs(collRef);
+    if (snapshot.empty) {
+      return [];
+    } else {
+      return snapshot.docs.map((item) => item.data() as CollectionTypes[C]);
+    }
+  }
+
 }
 
 export const firebaseService = new FirebaseService();

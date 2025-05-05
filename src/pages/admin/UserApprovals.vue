@@ -1,23 +1,18 @@
 <script setup lang="ts">
 import type { QTableColumn } from 'quasar'; // Changed to import type
-import { ref } from 'vue';
-
-interface Accounts {
-  username: string;
-  role: string;
-  time: string;
-  status: 'pending' | 'active' | 'inactive';
-}
+import { UserModel } from 'src/models/user.models';
+import { useUsersStore } from 'src/stores/user-store';
+import { computed, onMounted } from 'vue';
 
 const columns: QTableColumn[] = [
-  { 
+  {
     name: 'username',
     required: true,
-    label: 'Username',
+    label: 'Email',
     align: 'left',
-    field: (row: Accounts) => row.username,
+    field: (row: UserModel) => row.email,
     format: (val: string) => `${val}`,
-    sortable: true
+    sortable: true,
   },
   { name: 'role', align: 'center', label: 'Role', field: 'role', sortable: true },
   { name: 'time', label: 'Time', field: 'time', sortable: true },
@@ -26,46 +21,39 @@ const columns: QTableColumn[] = [
     label: 'Actions',
     align: 'center',
     field: '',
-    sortable: false
-  }
+    sortable: false,
+  },
 ];
+const userStore = useUsersStore();
 
-const rows = ref([
-  { username: 'monkey_d_luffy', role: "student", time: "4 hours ago", status: 'pending' },
-  { username: 'roronoa_zoro', role: "student", time: "3 hours ago", status: 'pending' },
-  { username: 'nami', role: "teacher", time: "2 hours ago", status: 'pending' },
-  { username: 'sanji', role: "supervisor", time: "4 hours ago", status: 'pending' },
-  { username: 'usopp', role: "teacher", time: "2 hours ago", status: 'pending' }
-]);
+const rows = computed(() => userStore.users);
 
-const approveItem = (row: Accounts) => {
-  const index = rows.value.findIndex(r => r.username === row.username);
+onMounted(async () => {
+  await userStore.loadUsers();
+});
+
+const approveItem = (row: UserModel) => {
+  const index = rows.value.findIndex((r) => r.email === row.email);
   if (index !== -1) {
     rows.value[index]!.status = 'active';
   }
-  console.log(rows.value[index]?.status)
+  console.log(rows.value[index]?.status);
 };
 
-const deleteItem = (row: Accounts) => {
-  const index = rows.value.findIndex(r => r.username === row.username);
+const deleteItem = (row: UserModel) => {
+  const index = rows.value.findIndex((r) => r.email === row.email);
   if (index !== -1) {
     rows.value.splice(index, 1);
   }
 };
-
 </script>
 
 <template>
-  <q-page class="q-pa-md" style="margin-top: 1rem;">
-    <q-table 
-      title="User pending approvals"
-      :rows="rows"
-      :columns="columns"
-      row-key="name"
-    >
+  <q-page class="q-pa-md" style="margin-top: 1rem">
+    <q-table title="User pending approvals" :rows="rows" :columns="columns" row-key="name">
       <template #body-cell-actions="props">
         <q-td :props="props" class="q-gutter-xs">
-          <q-btn 
+          <q-btn
             v-if="props.row.status === 'pending'"
             color="green"
             icon="check"
@@ -75,13 +63,7 @@ const deleteItem = (row: Accounts) => {
           >
             <q-tooltip>Approve</q-tooltip>
           </q-btn>
-          <q-btn
-            color="red"
-            icon="delete"
-            dense
-            round
-            @click="deleteItem(props.row)"
-          >
+          <q-btn color="red" icon="delete" dense round @click="deleteItem(props.row)">
             <q-tooltip>Delete</q-tooltip>
           </q-btn>
         </q-td>
