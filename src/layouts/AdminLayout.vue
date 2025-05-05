@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { logout } from 'src/utils/redirect';
 import EssentialLink, { type EssentialLinkProps } from 'src/components/EssentialLink.vue';
+import { useLogout } from 'src/utils/redirect';
 
+const { logout } = useLogout();
 const drawer = ref(false);
 const miniState = ref(false);
 const userManagementExpanded = ref(false);

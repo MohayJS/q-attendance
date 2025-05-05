@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { logout } from 'src/utils/redirect';
+import { useLogout } from 'src/utils/redirect';
+
+const { logout } = useLogout();
 
 function signOff() {
   logout();
