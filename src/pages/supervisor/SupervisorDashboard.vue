@@ -2,10 +2,8 @@
 import { useRouter } from 'vue-router';
 import { logout } from 'src/utils/redirect';
 
-const router = useRouter();
-
 function signOff() {
-    logout(router);
+  logout();
 }
 </script>
 

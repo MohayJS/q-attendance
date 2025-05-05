@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import { checkStatusAcc } from 'src/utils/redirect';
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { logout } from 'src/utils/redirect';
 import EssentialLink, { type EssentialLinkProps } from 'src/components/EssentialLink.vue';
-
-const router = useRouter();
-checkStatusAcc(router);
 
 const drawer = ref(false);
 const miniState = ref(false);
@@ -17,19 +12,19 @@ const linksList: EssentialLinkProps[] = [
     title: 'Dashboard',
     icon: 'space_dashboard',
     link: '/admin',
-  }
+  },
 ];
 
 const userManagementLinks: EssentialLinkProps[] = [
   {
     title: 'Users',
     icon: 'people',
-    link: '/admin/users'
+    link: '/admin/users',
   },
   {
     title: 'User Approvals',
     icon: 'how_to_reg',
-    link: '/admin/user-approvals'
+    link: '/admin/user-approvals',
   },
 ];
 
@@ -40,7 +35,7 @@ function drawerClick() {
 }
 
 function signOff() {
-  logout(router);
+  logout();
 }
 
 function toggleUserManagement() {
@@ -50,8 +45,8 @@ function toggleUserManagement() {
 </script>
 
 <template>
-  <q-layout view="lHh Lpr lFf" style="background-color: #f3f3f7;">
-    <q-header style="margin: 1rem; margin-left: 1.5rem;border-radius: 10px;">
+  <q-layout view="lHh Lpr lFf" style="background-color: #f3f3f7">
+    <q-header style="margin: 1rem; margin-left: 1.5rem; border-radius: 10px">
       <q-toolbar>
         <q-btn flat round dense icon="menu" @click="drawer = !drawer" />
 
@@ -59,7 +54,7 @@ function toggleUserManagement() {
 
         <q-btn round>
           <q-avatar>
-            <img src="https://cdn.quasar.dev/img/avatar.png">
+            <img src="https://cdn.quasar.dev/img/avatar.png" />
           </q-avatar>
           <q-menu>
             <q-btn color="primary" label="Logout" @click="signOff" />
@@ -76,13 +71,13 @@ function toggleUserManagement() {
       @click.capture="drawerClick()"
     >
       <q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: '0' }">
-        <q-card style="padding-top: 1rem;">
+        <q-card style="padding-top: 1rem">
           <q-card-section>
             <div class="flex items-center gap-2">
               <q-icon size="2rem" class="self-center">
-                <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg">
+                <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
               </q-icon>
-              <div v-if="!miniState" style="font-size: 1.4rem; margin-left: 0.5rem;">
+              <div v-if="!miniState" style="font-size: 1.4rem; margin-left: 0.5rem">
                 <strong>Q-Class Attendance</strong>
               </div>
             </div>
@@ -91,7 +86,7 @@ function toggleUserManagement() {
 
         <q-list padding>
           <EssentialLink v-for="link in linksList" :key="link.title" v-bind="link" />
-        
+
           <q-expansion-item
             v-if="!miniState"
             v-model="userManagementExpanded"
@@ -108,13 +103,8 @@ function toggleUserManagement() {
               />
             </q-list>
           </q-expansion-item>
-          
-          <q-item
-            v-else
-            clickable
-            v-ripple
-            @click="toggleUserManagement"
-          >
+
+          <q-item v-else clickable v-ripple @click="toggleUserManagement">
             <q-item-section avatar>
               <q-icon name="groups" />
             </q-item-section>

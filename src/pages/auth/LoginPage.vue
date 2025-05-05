@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useAuthStore } from 'src/stores/auth-store';
-import { SessionStorage } from 'quasar';
-import { checkStatusAcc } from 'src/utils/redirect';
 import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
@@ -21,19 +19,15 @@ interface Accounts {
 
 const accounts = ref<Accounts[]>([]);
 
-function onSubmit() {
-  const auth = authStore.login(username.value, password.value);
+async function onSubmit() {
+  const auth = await authStore.login(username.value, password.value);
   if (auth) {
-    SessionStorage.set('CURRENT_USER', auth);
-    checkStatusAcc(router);
-  } else {
-    alert('Invalid username or password');
+    await router.replace('/');
   }
 }
 
 function showAccounts() {
-  const acc = authStore;
-  accounts.value = acc.accounts;
+  accounts.value = [];
   showTable.value = !showTable.value;
 }
 </script>
@@ -46,7 +40,7 @@ function showAccounts() {
       style="background: radial-gradient(circle, #efeeea 0%, #f8f4e1 100%)"
     >
       <q-card-section>
-        <img class="msupic" src="/src/assets/msulogo2.png" height="80px" width="80px">
+        <img class="msupic" src="/src/assets/msulogo2.png" height="80px" width="80px" />
         <h4 class="signin-text">Please sign-in your account if mayron</h4>
         <q-form @submit="onSubmit">
           <div class="row">
@@ -141,12 +135,11 @@ function showAccounts() {
   background-color: #f8f4e1; /* optional background */
   flex-direction: column;
 }
-.msupic{
+.msupic {
   display: block;
   margin: 0 auto;
-
 }
-.signin-text{
+.signin-text {
   color: grey;
   font-size: 15px;
   display: block;
@@ -195,5 +188,4 @@ function showAccounts() {
 .tableacc {
   width: 100%;
 }
-
 </style>

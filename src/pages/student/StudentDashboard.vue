@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 function signOff() {
-  logout(router);
+  logout();
 }
 </script>
 

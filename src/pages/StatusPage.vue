@@ -1,48 +1,33 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { logout, checkStatusAcc, getAccount } from 'src/utils/redirect';
+import { useAuthStore } from 'src/stores/auth-store';
+import { logout } from 'src/utils/redirect';
 import { computed } from 'vue';
-
-const router = useRouter();
-checkStatusAcc(router);
-
-interface Account {
-  username: string;
-  password: string;
-  role: string;
-  status: string;
-}
-
-const account = getAccount() as Account;
-
+const authStore = useAuthStore();
+const account = computed(() => authStore.currentAccount);
 const statusConfig = computed(() => {
-  if (account.status === 'inactive') {
+  if (account.value?.status === 'inactive') {
     return {
       color: 'negative',
       icon: 'block',
       title: 'Access Denied',
-      message: 'Your account has been denied access. Please contact the administrator.'
+      message: 'Your account has been denied access. Please contact the administrator.',
     };
   }
-  if (account.status === 'pending') {
+  if (account.value?.status === 'pending') {
     return {
       color: 'warning',
       icon: 'schedule',
       title: 'Pending Approval',
-      message: 'Your account is awaiting administrator approval.'
+      message: 'Your account is awaiting administrator approval.',
     };
   }
   return {
     color: 'positive',
     icon: 'check_circle',
     title: 'Access Granted',
-    message: 'You have full access to the system.'
+    message: 'You have full access to the system.',
   };
 });
-
-function signOff() {
-  logout(router);
-}
 </script>
 
 <template>
@@ -50,31 +35,22 @@ function signOff() {
     <div class="status-container">
       <q-card class="status-card">
         <q-card-section>
-          <q-alert 
-            :color="statusConfig.color"
-            :icon="statusConfig.icon"
-            class="status-alert"
-          >
+          <q-alert :color="statusConfig.color" :icon="statusConfig.icon" class="status-alert">
             <h3 class="q-my-none">{{ statusConfig.title }}</h3>
             <p class="q-mt-sm q-mb-none">{{ statusConfig.message }}</p>
           </q-alert>
 
-          <div v-if="account.status === 'inactive'" class="q-mt-md">
-            <q-btn
-              color="primary"
-              @click="signOff"
-              class="full-width"
-              label="Return to Login"
-            />
+          <div v-if="account?.status === 'inactive'" class="q-mt-md">
+            <q-btn color="primary" @click="logout" class="full-width" label="Return to Login" />
           </div>
 
-          <template v-else-if="account.status === 'active'">
+          <template v-else-if="account?.status === 'active'">
             <div class="q-mt-lg account-info">
               <h5 class="q-my-md">Account Details</h5>
               <div class="info-grid">
                 <div class="info-item">
-                  <span class="info-label">Username:</span>
-                  <span class="info-value">{{ account.username }}</span>
+                  <span class="info-label">Email:</span>
+                  <span class="info-value">{{ account?.email }}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Role:</span>
@@ -96,13 +72,8 @@ function signOff() {
           </div>
         </q-card-section>
 
-        <q-card-actions v-if="account.status === 'pending'" class="q-px-md">
-          <q-btn
-            color="primary"
-            @click="signOff"
-            class="full-width"
-            label="Logout"
-          />
+        <q-card-actions v-if="account?.status == 'pending'" class="q-px-md">
+          <q-btn color="primary" @click="logout" class="full-width" label="Logout" />
         </q-card-actions>
       </q-card>
     </div>
