@@ -30,8 +30,16 @@ export const useAuthStore = defineStore('auth', {
           avatar: user.photoURL || '',
           email: user.email || '',
           emailVerified: !!user.emailVerified,
-          fullName: user.displayName || ''
+          fullName: user.displayName || '',
+          role: 'student'
         }
+        const userKey = this.currentAccount.key || '';
+        const userData = await firebaseService.getRecord('users', userKey);
+        this.currentAccount = {
+          ...this.currentAccount,
+          ...userData
+        }
+        await firebaseService.updateRecord('users', this.currentAccount.key || '', this.currentAccount);
         return this.currentAccount;
       } else {
         this.currentAccount = undefined;
