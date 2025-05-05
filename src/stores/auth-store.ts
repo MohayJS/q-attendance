@@ -1,58 +1,55 @@
 import { defineStore } from 'pinia';
-
+import type { UserModel } from 'src/models/user.models';
+import { firebaseService } from 'src/services/firebase-service';
+interface IState {
+  currentAccount?: UserModel | undefined
+}
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    accounts: [
-      {
-        username: 'user1',
-        password: 'user1',
-        role: 'student',
-        status: 'inactive'
-      },
-      {
-        username: 'user2',
-        password: 'user2',
-        role: 'teacher',
-        status: 'pending'
-      },
-      {
-        username: 'student',
-        password: 'student',
-        role: 'student',
-        status: 'active'
-      },
-      {
-        username: 'teacher',
-        password: 'teacher',
-        role: 'teacher',
-        status: 'active'
-      },
-      {
-        username: 'supervisor',
-        password: 'supervisor',
-        role: 'supervisor',
-        status: 'active'
-      },
-      {
-        username: 'admin',
-        password: 'admin',
-        role: 'admin',
-        status: 'active'
-      },
-    ],
-  }),
+  state: () => ({} as IState),
   getters: {
-    getAccounts: (state) => state.accounts,
+    isUserAdmin: (state) => state.currentAccount?.role == 'admin',
   },
   actions: {
-    login(username: string, password: string) {
-      const account = this.accounts.find(
-        (account) => account.username === username && account.password === password
-      );
-      if (account) {
-        return account;
-      }
-      return null;
+    async login(username: string, password: string) {
+      await firebaseService.signWithEmailPassword(username, password);
+      return this.authorizeUser();
     },
+    async loginWithGoogle() {
+      await firebaseService.signInWithGoogle();
+      return this.authorizeUser();
+    },
+    async register(email: string, password: string) {
+      await firebaseService.registerWithEmailPassword(email, password);
+      return this.authorizeUser();
+    },
+    async authorizeUser() {
+      const user = await firebaseService.authorizeUser();
+      if (user) {
+        this.currentAccount = {
+          key: user.uid,
+          avatar: user.photoURL || '',
+          email: user.email || '',
+          emailVerified: !!user.emailVerified,
+          fullName: user.displayName || '',
+          role: 'student'
+        }
+        const userKey = this.currentAccount.key || '';
+        const userData = await firebaseService.getRecord('users', userKey);
+        this.currentAccount = {
+          ...this.currentAccount,
+          ...userData
+        }
+        await firebaseService.updateRecord('users', this.currentAccount.key || '', this.currentAccount);
+        return this.currentAccount;
+      } else {
+        this.currentAccount = undefined;
+      }
+    },
+    async logout() {
+      await firebaseService.signOut();
+    },
+    sendForgetPassword(email: string) {
+      return firebaseService.resetPassword(email);
+    }
   },
 });

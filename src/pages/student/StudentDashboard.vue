@@ -1,26 +1,25 @@
 <script setup lang="ts">
 import ApexCharts from 'apexcharts';
 import { onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { logout } from 'src/utils/redirect';
-
-const router = useRouter();
 
 const AttendanceTrend = {
   chart: {
     type: 'line',
     height: 280,
-    toolbar: { show: false }
+    toolbar: { show: false },
   },
-  series: [{
-    name: 'Attendance Rate',
-    data: [85, 88, 92, 90, 95, 93, 96]
-  }],
+  series: [
+    {
+      name: 'Attendance Rate',
+      data: [85, 88, 92, 90, 95, 93, 96],
+    },
+  ],
   xaxis: {
-    categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   },
   colors: ['#7367F0'],
-  stroke: { width: 2, curve: 'smooth' }
+  stroke: { width: 2, curve: 'smooth' },
 };
 
 const CurrentSchedule = {
@@ -28,27 +27,35 @@ const CurrentSchedule = {
     type: 'bar',
     height: 200,
     stacked: true,
-    toolbar: { show: false }
+    toolbar: { show: false },
   },
   plotOptions: {
     bar: {
       columnWidth: '45%',
-      borderRadius: 5
-    }
+      borderRadius: 5,
+    },
   },
-  series: [{
-    name: 'Classes',
-    data: [3, 2, 3, 2, 4, 4, 1]
-  }],
+  series: [
+    {
+      name: 'Classes',
+      data: [3, 2, 3, 2, 4, 4, 1],
+    },
+  ],
   xaxis: {
-    categories: ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun']
+    categories: ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'],
   },
-  colors: ['#00E396']
+  colors: ['#00E396'],
 };
 
 onMounted(() => {
-  const attendanceChart = new ApexCharts(document.querySelector("#attendance-trend"), AttendanceTrend);
-  const scheduleChart = new ApexCharts(document.querySelector("#current-schedule"), CurrentSchedule);
+  const attendanceChart = new ApexCharts(
+    document.querySelector('#attendance-trend'),
+    AttendanceTrend,
+  );
+  const scheduleChart = new ApexCharts(
+    document.querySelector('#current-schedule'),
+    CurrentSchedule,
+  );
   void attendanceChart.render();
   void scheduleChart.render();
 });
@@ -61,7 +68,7 @@ onUnmounted(() => {
 });
 
 function signOff() {
-  logout(router);
+  logout();
 }
 </script>
 
@@ -73,7 +80,7 @@ function signOff() {
     </div>
 
     <div class="row">
-      <div class="col-12 row" style="margin-bottom: 1rem;">
+      <div class="col-12 row" style="margin-bottom: 1rem">
         <div class="grid col-3 cardContainer">
           <q-card class="col-2 card">
             <q-card-section>
@@ -99,11 +106,11 @@ function signOff() {
             </q-card-section>
           </q-card>
         </div>
-        <div id="attendance-trend" class="col chart-card" style="margin-left: 1rem;"></div>
+        <div id="attendance-trend" class="col chart-card" style="margin-left: 1rem"></div>
       </div>
-    
+
       <div class="col-12 row">
-        <div id="current-schedule" class="chart-card col" style="margin-right: 1rem;"></div>
+        <div id="current-schedule" class="chart-card col" style="margin-right: 1rem"></div>
         <q-markup-table class="schedule-table col-4">
           <thead>
             <tr>
@@ -136,9 +143,7 @@ function signOff() {
         </q-markup-table>
       </div>
 
-      <div class="schedule-section">
-        
-      </div>
+      <div class="schedule-section"></div>
     </div>
 
     <div>
@@ -173,7 +178,7 @@ function signOff() {
   background: white;
   border-radius: 10px;
   padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .metric-item {
@@ -205,13 +210,13 @@ function signOff() {
   background: white;
   border-radius: 10px;
   padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .schedule-table {
   background: white;
   border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .schedule-table th {

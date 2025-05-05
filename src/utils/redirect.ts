@@ -1,33 +1,21 @@
-import { SessionStorage, useQuasar } from 'quasar';
-import type { Router } from 'vue-router';
+import { useQuasar } from 'quasar';
+import { useAuthStore } from 'src/stores/auth-store';
+import { useRouter } from 'vue-router';
 
-export function checkStatusAcc(router: Router) {
-  const auth: { role: string, status: string } | null = SessionStorage.getItem("CURRENT_USER");
 
-  if (auth) {
-    if (auth.status === 'active') {
-      void router.push(`/${auth.role}`);
-    } else if (auth.status === 'pending' || auth.status === 'inactive') {
-      void router.push('/status');
-    }
-  }
-}
 const $q = useQuasar();
-export function logout(router: Router) {
+const router = useRouter();
+const authStore = useAuthStore();
+export function logout() {
   $q.notify({
     message: 'Are you sure',
     actions: [
       {
         label: 'Yes', handler() {
-          SessionStorage.remove('CURRENT_USER');
+          void authStore.logout();
           void router.push('/');
         },
       }, { label: 'Meybe' }
     ]
   })
-}
-
-export function getAccount() {
-  const auth: { role: string, status: string } | null = SessionStorage.getItem("CURRENT_USER");
-  return auth;
 }

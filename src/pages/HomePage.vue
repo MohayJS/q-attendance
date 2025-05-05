@@ -47,12 +47,12 @@ const gotoDashboard = () => {
         </div>
       </div>
     </div>
-    
+
     <!-- REMOVE THIS LATER -->
      <!-- <div style="position: absolute; top: 80%; left: 50%; transform: translate(-50%,-50%);">
       <q-btn label="What's new" color="amber" @click="alert = true" />
      </div>
-    
+
 
     <q-dialog v-model="alert">
       <q-card>
