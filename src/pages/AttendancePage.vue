@@ -1,26 +1,21 @@
 <script setup lang="ts">
 import { uid } from 'quasar';
 import { useClassStore } from 'src/stores/class-store';
-import { useAttendanceStore } from 'src/stores/attendance-store';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import type { UserModel } from 'src/models/user.models';
 
 const route = useRoute();
 const classStore = useClassStore();
-const attendanceStore = useAttendanceStore();
 const activeClass = computed(() => {
   if (typeof route.params?.classKey == 'string') {
     const classKey = route.params.classKey;
     return (classStore.classes || []).find((c) => c.key == classKey);
-  } else {
-    return {
-      key: '',
-      name: '',
-    };
   }
+  return undefined;
 });
 const students = computed(() => {
-  return attendanceStore.students || [];
+  return [] as UserModel[];
 });
 type AttendanceStruct = {
   [studentKey: string]: boolean;
@@ -28,17 +23,32 @@ type AttendanceStruct = {
 const attendance = ref<AttendanceStruct>({});
 const showNewStudentDialog = ref(false);
 const studentName = ref('');
+onMounted(async () => {
+  if (typeof route.params?.classKey == 'string') {
+    await classStore.loadClass(route.params?.classKey);
+  }
+});
 function enrollStudent() {
   showNewStudentDialog.value = true;
 }
-function saveStudent() {
+async function saveStudent() {
   const payload = {
     key: uid(),
     classKey: activeClass.value?.key || '',
     student: studentName.value,
   };
-  attendanceStore.enrollNewStudent(payload);
-  studentName.value = '';
+
+  if (activeClass.value) {
+    await classStore.enroll({
+      class: activeClass.value,
+      student: {
+        email: 'dummy@mail.com',
+        fullName: payload.student,
+      },
+    });
+  }
+
+  studentName.value = payload.student;
   showNewStudentDialog.value = false;
 }
 </script>
@@ -50,18 +60,18 @@ function saveStudent() {
         <q-btn icon="add" @click="enrollStudent()"></q-btn>
       </q-toolbar>
       <q-list bordered>
-        <q-item v-for="item in students" :key="item.key" class="q-my-sm" clickable v-ripple>
+        <q-item v-for="item in students" :key="String(item.key)" class="q-my-sm" clickable v-ripple>
           <q-item-section avatar>
             <q-avatar color="primary" text-color="white">
-              {{ item.student[0] }}
+              {{ item.fullName }}
             </q-avatar>
           </q-item-section>
 
           <q-item-section>
-            <q-item-label>{{ item.student }}</q-item-label>
+            <q-item-label>{{ item.fullName }}</q-item-label>
           </q-item-section>
 
-          <q-item-section side>
+          <q-item-section side v-if="item.key">
             <q-checkbox v-model="attendance[item.key]" />
           </q-item-section>
         </q-item>

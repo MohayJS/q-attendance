@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { uid } from 'quasar';
+import { date, uid } from 'quasar';
 import { useClassStore } from 'src/stores/class-store';
 import { computed, ref } from 'vue';
 
@@ -12,10 +12,13 @@ const className = ref('');
 function addNewClass() {
   showNewClassDialog.value = true;
 }
-function saveClass() {
-  classStore.saveClass({
+async function saveClass() {
+  await classStore.saveClass({
     key: uid(),
     name: className.value,
+    academicYear: date.formatDate(new Date(), 'YYYY'),
+    classCode: 'ABCD',
+    section: 'XY',
   });
   className.value = '';
   showNewClassDialog.value = false;
@@ -27,7 +30,7 @@ function saveClass() {
       <q-list bordered>
         <q-item
           v-for="theClass in classes"
-          :key="theClass.key"
+          :key="String(theClass.key)"
           class="q-my-sm"
           clickable
           v-ripple

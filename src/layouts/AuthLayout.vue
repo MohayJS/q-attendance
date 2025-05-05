@@ -1,10 +1,4 @@
-<script setup lang="ts">
-import { checkStatusAcc } from 'src/utils/redirect';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
-checkStatusAcc(router);
-</script>
+<script setup lang="ts"></script>
 <template>
   <q-layout>
     <q-page-container>
