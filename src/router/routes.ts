@@ -3,6 +3,7 @@ import type { RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
+    name: 'home',
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('pages/HomePage.vue') },
@@ -42,9 +43,9 @@ const routes: RouteRecordRaw[] = [
     path: '/admin',
     component: () => import('layouts/AdminLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/admin/DashboardPage.vue')},
-      { path: 'user-approvals', component: () => import('pages/admin/UserApprovals.vue')},
-      { path: 'users', component: () => import('pages/admin/UsersPage.vue')},
+      { path: '', component: () => import('pages/admin/DashboardPage.vue'), meta: { admin: true } },
+      { path: 'user-approvals', component: () => import('pages/admin/UserApprovals.vue'), meta: { admin: true } },
+      { path: 'users', component: () => import('pages/admin/UsersPage.vue'), meta: { admin: true } },
     ]
   },
 
@@ -63,8 +64,13 @@ const routes: RouteRecordRaw[] = [
     path: '/auth',
     component: () => import('layouts/AuthLayout.vue'),
     children: [
-    {path: 'login', component: () => import('pages/auth/LoginPage.vue')},
-    {path: 'register', component: () => import('pages/auth/RegisterPage.vue')},
+      {
+        path: 'login',
+        name: 'login',
+        component: () => import('pages/auth/LoginPage.vue'),
+        meta: { anonymous: true }
+      },
+      { path: 'register', component: () => import('pages/auth/RegisterPage.vue'), meta: { anonymous: true } },
 
     ]
   },
