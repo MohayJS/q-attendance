@@ -1,32 +1,35 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
-import type { Attendance, EnrolledStudents } from 'src/models/attendance.models';
+import { date } from 'quasar';
+import type { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
+import { firebaseService } from 'src/services/firebase-service';
 
 export const useAttendanceStore = defineStore('attendance', {
   state: () => ({
-    students: [] as EnrolledStudents[],
-    attendance: [] as Attendance[]
+    meetings: [] as ClassMeetingModel[]
   }),
 
   getters: {
 
   },
   actions: {
-    enrollNewStudent(payload: EnrolledStudents) {
-      this.students.push(payload);
+    async newClassMeeting(payload: ClassMeetingModel) {
+      const record = await firebaseService.createRecord('meetings', payload);
+      if (record) {
+        this.meetings.push(record);
+      }
     },
-    recordAttendance(payload: {
-      key: string;
-      student: EnrolledStudents,
-      status: Attendance['status'],
-      date: string
+    async checkInAttendance(payload: {
+      student: string;
+      meeting: ClassMeetingModel,
+      status: MeetingCheckInModel['status']
     }) {
-      this.attendance.push({
-        key: payload.key,
-        date: payload.date,
-        status: payload.status,
-        enrollKey: payload.student.key,
-        comments: ''
-      });
+
+      await firebaseService.createRecord('check-ins', {
+        checkInTime: date.formatDate(new Date(), 'HH:mm:ss'),
+        key: '',
+        status: payload.status || 'check-in',
+        student: payload.student
+      }, `meetings/${payload.meeting.key}/checkIns`);
     },
   },
 });

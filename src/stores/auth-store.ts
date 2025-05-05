@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
-import { IUser } from 'src/models/user.models';
+import type { UserModel } from 'src/models/user.models';
 import { firebaseService } from 'src/services/firebase-service';
 interface IState {
-  currentAccount?: IUser | undefined
+  currentAccount?: UserModel | undefined
 }
 export const useAuthStore = defineStore('auth', {
   state: () => ({} as IState),
@@ -10,8 +10,9 @@ export const useAuthStore = defineStore('auth', {
     isUserAdmin: (state) => state.currentAccount?.role == 'admin',
   },
   actions: {
-    login(username: string, password: string) {
-      return firebaseService.signWithEmailPassword(username, password);
+    async login(username: string, password: string) {
+      await firebaseService.signWithEmailPassword(username, password);
+      return this.authorizeUser();
     },
     async loginWithGoogle() {
       await firebaseService.signInWithGoogle();
