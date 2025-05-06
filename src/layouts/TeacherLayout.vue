@@ -1,9 +1,11 @@
 <script setup lang='ts'>
 import EssentialLink, { EssentialLinkProps } from 'src/components/EssentialLink.vue';
+import { useAuthStore } from 'src/stores/auth-store';
 import { useLogout } from 'src/utils/redirect';
 import { ref } from 'vue';
 
 const { logout } = useLogout();
+const authStore = useAuthStore();
 
 const drawer = ref(false);
 const miniState = ref(false);
@@ -13,14 +15,14 @@ const linksList: EssentialLinkProps[] = [
     title: 'Dashboard',
     icon: 'space_dashboard',
     link: '/teacher',
-  },
+},
   {
-    title: 'Empty 1',
+    title: 'Reserve 1',
     icon: 'menu_book',
     link: '/teacher/classes',
   },
   {
-    title: 'Empty 2',
+    title: 'Reserve 2',
     icon: 'menu_book',
     link: '/teacher/classes',
   }
@@ -39,13 +41,13 @@ function drawerClick() {
             <q-toolbar class="q-toolbar">
                 <q-btn flat round dense icon="menu" @click="drawer = !drawer" />
 
-                <q-toolbar-title>Hi, User!</q-toolbar-title>
+                <q-toolbar-title>Hi, {{authStore.currentAccount?.fullName}}!</q-toolbar-title>
 
                 <div class="q-gutter-sm">
                     <q-btn flat :size="'md'" round icon="add" />
                     <q-btn flat round>
                         <q-avatar>
-                            <img src="https://cdn.quasar.dev/img/avatar.png">
+                            <img :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
                         </q-avatar>
                         <q-menu>
                             <q-btn color="primary" label="Logout" @click="logout" />

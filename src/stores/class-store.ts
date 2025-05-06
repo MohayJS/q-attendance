@@ -13,12 +13,25 @@ export const useClassStore = defineStore('Class', {
   },
 
   actions: {
+    async loadClassesByTeacher(key: string) {
+      const records = await firebaseService.findRecords('classes');
+
+      const filteredRecords = records.filter((record) => {
+        return record.teachers?.some(teacher => teacher.key === key);
+      })
+      this.classes = filteredRecords;
+      return this.classes;
+    },
     async loadClass(key: string) {
       const record = await firebaseService.getRecord('classes', key);
       if (record) {
         this.classes.push(record);
         return record;
       }
+    },
+    async deleteClass(key: string) {
+      await firebaseService.deleteRecord('classes', key);
+      this.classes = this.classes.filter(c => c.key !== key);
     },
     async saveClass(payload: ClassModel) {
       const record = await firebaseService.createRecord('classes', payload);
@@ -37,11 +50,8 @@ export const useClassStore = defineStore('Class', {
         cls.enrolled.push(record);
       }
     },
-    async join(payload: {
-      class: ClassModel,
-      teacher: UserModel
-    }) {
-      const record = await firebaseService.createRecord('teachers', payload.teacher, `/classes/${payload.class.key}/teachers`);
+    async join(payload: { class: ClassModel, teacher: UserModel}) {
+      const record = await firebaseService.createRecord('teachers', payload.teacher, `/classes/${payload.class.key}`);
       const cls = this.classes.find(c => c.key == payload.class.key);
       if (record && cls) {
         cls.teachers = cls.teachers || [];

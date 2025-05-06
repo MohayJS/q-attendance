@@ -22,7 +22,7 @@ const accounts = ref<Accounts[]>([]);
 async function onSubmit() {
   const auth = await authStore.login(username.value, password.value);
   if (auth) {
-    await router.replace('/');
+    await router.replace({ name: `${authStore.currentAccount?.role}` });
   }
 }
 async function continueWithGoogle() {
