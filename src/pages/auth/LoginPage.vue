@@ -27,7 +27,7 @@ async function onSubmit() {
 }
 async function continueWithGoogle() {
   await authStore.loginWithGoogle();
-  await router.replace({ name: 'home' });
+  await router.replace({ name: `${authStore.currentAccount?.role}` });
 }
 function showAccounts() {
   accounts.value = [];
