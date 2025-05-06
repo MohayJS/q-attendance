@@ -23,6 +23,11 @@ const userManagementLinks: EssentialLinkProps[] = [
     link: '/admin/users',
   },
   {
+    title: 'Role Management',
+    icon: 'admin_panel_settings',
+    link: '/admin/role-management',
+  },
+  {
     title: 'User Approvals',
     icon: 'how_to_reg',
     link: '/admin/user-approvals',

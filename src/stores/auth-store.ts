@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { Notify } from 'quasar';
 import type { UserModel } from 'src/models/user.models';
 import { firebaseService } from 'src/services/firebase-service';
 interface IState {
@@ -44,6 +45,19 @@ export const useAuthStore = defineStore('auth', {
       } else {
         this.currentAccount = undefined;
       }
+    },
+    async updateRole(role: 'student' | 'teacher' | 'supervisor' | 'admin', key: string) {
+      await firebaseService.updateRecord('users', key, { role })
+      .then(() => {
+        Notify.create({
+          message: 'Role updated',
+          color: 'green',
+          icon: 'check_circle',
+          position: 'top',
+          timeout: 3000,
+          progress: true
+        });
+      })
     },
     async logout() {
       await firebaseService.signOut();
