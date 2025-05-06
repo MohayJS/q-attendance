@@ -59,6 +59,19 @@ export const useAuthStore = defineStore('auth', {
         });
       })
     },
+    async updateStatus(status: 'active' | 'inactive' | 'pending', key: string) {
+      await firebaseService.updateRecord('users', key, { status })
+        .then(() => {
+          Notify.create({
+            message: `Status updated to ${status}`,
+            color: status === 'active' ? 'green' : status === 'pending' ? 'orange' : 'red',
+            icon: status === 'active' ? 'check_circle' : status === 'pending' ? 'schedule' : 'block',
+            position: 'top',
+            timeout: 3000,
+            progress: true
+          });
+        })
+    },
     async logout() {
       await firebaseService.signOut();
     },
