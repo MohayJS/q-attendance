@@ -48,11 +48,10 @@ export default defineRouter(function (/* { store, ssrContext } */) {
 
   Router.beforeEach(async (to, from, next) => {
     const user = await authStore.authorizeUser()
-    if (!user && to.name != 'login') {
-      next({ name: 'login' })
-    } else if (user && to.name == 'login') {
+    if (to.meta?.anonymous && user) {
+      showNotif()
       next({ name: 'home' })
-    } else if (to.meta?.admin && user?.role !== 'admin') {
+    } if (to.meta?.admin && user?.role !== 'admin') {
       showNotif()
       next({ name: 'home' })
     } else if (to.meta?.supervisor && user?.role !== 'supervisor') {
