@@ -3,10 +3,9 @@ import type { RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'home',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/HomePage.vue') },
+      { name: 'home', path: '', component: () => import('pages/HomePage.vue') },
       { name: 'classes', path: 'class', component: () => import('pages/ClassPage.vue') },
       { name: 'attendance', path: 'attendance/:classKey', component: () => import('pages/AttendancePage.vue') },
       { name: 'rollCall', path: 'roll-call/:classKey', component: () => import('pages/RollCallPage.vue') },
@@ -18,7 +17,7 @@ const routes: RouteRecordRaw[] = [
     path: '/student',
     component: () => import('layouts/StudentLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/student/StudentDashboard.vue') },
+      { name: 'student', path: '', component: () => import('pages/student/StudentDashboard.vue'), meta: { student: true } },
     ]
   },
   // Teacher Page
@@ -26,7 +25,7 @@ const routes: RouteRecordRaw[] = [
     path: '/teacher',
     component: () => import('layouts/TeacherLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/teacher/TeacherDashboard.vue') },
+      { name: 'teacher', path: '', component: () => import('pages/teacher/TeacherDashboard.vue'), meta: { teacher: true } },
     ]
   },
   // Supervisor Page
@@ -34,7 +33,7 @@ const routes: RouteRecordRaw[] = [
     path: '/supervisor',
     component: () => import('layouts/SupervisorLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/supervisor/SupervisorDashboard.vue') },
+      { name: 'supervisor', path: '', component: () => import('pages/supervisor/SupervisorDashboard.vue'), meta: { supervisor: true } },
     ]
   },
 
@@ -43,9 +42,9 @@ const routes: RouteRecordRaw[] = [
     path: '/admin',
     component: () => import('layouts/AdminLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/admin/DashboardPage.vue'), meta: { admin: true } },
-      { path: 'user-approvals', component: () => import('pages/admin/UserApprovals.vue'), meta: { admin: true } },
-      { path: 'users', component: () => import('pages/admin/UsersPage.vue'), meta: { admin: true } },
+      { name: 'admin', path: '', component: () => import('pages/admin/DashboardPage.vue'), meta: { admin: true } },
+      { name: 'user-approvals', path: 'user-approvals', component: () => import('pages/admin/UserApprovals.vue'), meta: { admin: true } },
+      { name: 'users', path: 'users', component: () => import('pages/admin/UsersPage.vue'), meta: { admin: true } },
     ]
   },
 
@@ -54,7 +53,7 @@ const routes: RouteRecordRaw[] = [
     path: '/status',
     component: () => import('layouts/StatusAccLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/StatusPage.vue') },
+      { name: 'status', path: '', component: () => import('pages/StatusPage.vue') },
     ]
   },
 
@@ -70,7 +69,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/auth/LoginPage.vue'),
         meta: { anonymous: true }
       },
-      { path: 'register', component: () => import('pages/auth/RegisterPage.vue'), meta: { anonymous: true } },
+      { name: 'register', path: 'register', component: () => import('pages/auth/RegisterPage.vue'), meta: { anonymous: true } },
 
     ]
   },
