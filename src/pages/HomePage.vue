@@ -1,34 +1,22 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { SessionStorage } from 'quasar';
-import { ref } from 'vue';
+import { useAuthStore } from 'src/stores/auth-store';
 
-const isCurrent_User = ref(SessionStorage.getItem('CURRENT_USER') !== null);
+const authStore = useAuthStore();
+console.log(authStore)
+
 const router = useRouter();
-// const alert = ref(false);
 
 const signinbutton = () => {
-  router.push('/auth/login').catch(() => {
-  });
+  void router.push('/auth/login')
 };
 
 const signupbutton = () => {
-  router.push('/auth/register').catch(() => {
-  });
+  void router.push('/auth/register')
 };
 
 const gotoDashboard = () => {
-  const user: { role: string } = SessionStorage.getItem('CURRENT_USER')!;
-
-  if (user.role === 'student') {
-    void router.push('/student');
-  } else if (user.role === 'teacher') {
-    void router.push('/teacher');
-  } else if (user.role === 'supervisor') {
-    void router.push('/supervisor');
-  } else if (user.role === 'admin') {
-    void router.push('/admin');
-  }
+  void router.push(`${authStore.currentAccount?.role}`)
 }
 
 </script>
@@ -38,7 +26,7 @@ const gotoDashboard = () => {
     <div>
       <h3 class="text-center" color="white">Landing Page</h3>
       <div class="buttons">
-        <div v-if="isCurrent_User">
+        <div v-if="authStore.currentAccount">
           <q-btn label="Dashboard" color="primary" @click="gotoDashboard" />
         </div>
         <div v-else>
