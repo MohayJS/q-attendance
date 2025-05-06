@@ -19,11 +19,11 @@ export const useAuthStore = defineStore('auth', {
       await firebaseService.signInWithGoogle();
       return this.authorizeUser();
     },
-    async register(email: string, password: string) {
+    async register(email: string, password: string, displayName: string, role: string) {
       await firebaseService.registerWithEmailPassword(email, password);
-      return this.authorizeUser();
+      return this.authorizeUser(displayName, role);
     },
-    async authorizeUser() {
+    async authorizeUser(displayName: string = '', role: string = '') {
       const user = await firebaseService.authorizeUser();
       if (user) {
         this.currentAccount = {
@@ -31,8 +31,9 @@ export const useAuthStore = defineStore('auth', {
           avatar: user.photoURL || '',
           email: user.email || '',
           emailVerified: !!user.emailVerified,
-          fullName: user.displayName || '',
-          role: 'student'
+          fullName: user.displayName || displayName,
+          role: role as 'teacher' | 'admin' | 'supervisor' | 'student',
+          status: 'active'
         }
         const userKey = this.currentAccount.key || '';
         const userData = await firebaseService.getRecord('users', userKey);

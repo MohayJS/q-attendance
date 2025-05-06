@@ -4,6 +4,6 @@ export interface UserModel {
   email: string;
   emailVerified?: boolean;
   avatar?: string;
-  status?: string;
+  status?: 'active' | 'inactive' | 'pending';
   role?: 'teacher' | 'admin' | 'supervisor' | 'student'
 }

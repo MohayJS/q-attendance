@@ -8,16 +8,6 @@ const router = useRouter();
 
 const username = ref('');
 const password = ref('');
-const showTable = ref(false);
-
-interface Accounts {
-  username: string;
-  password: string;
-  role: string;
-  status: string;
-}
-
-const accounts = ref<Accounts[]>([]);
 
 async function onSubmit() {
   const auth = await authStore.login(username.value, password.value);
@@ -28,10 +18,6 @@ async function onSubmit() {
 async function continueWithGoogle() {
   await authStore.loginWithGoogle();
   await router.replace({ name: `${authStore.currentAccount?.role}` });
-}
-function showAccounts() {
-  accounts.value = [];
-  showTable.value = !showTable.value;
 }
 </script>
 
@@ -67,47 +53,7 @@ function showAccounts() {
       </q-card-section>
     </q-card>
 
-    <div class="flex">
-      <q-btn
-        class="buttontable"
-        :label="showTable ? 'Hide Existing Accounts' : 'Show Existing Accounts'"
-        color="primary"
-        @click="showAccounts"
-      />
-      <p>Number of Accounts: {{ accounts.length }}</p>
-    </div>
-    <div class="tableacc" v-if="showTable">
-      <q-markup-table flat bordered class="table-auto">
-        <thead>
-          <tr>
-            <th class="text-left">Username</th>
-            <th class="text-left">Password</th>
-            <th class="text-left">Role</th>
-            <th class="text-left">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="acc in accounts" :key="acc.username">
-            <td>{{ acc.username }}</td>
-            <td>{{ acc.password }}</td>
-            <td>{{ acc.role }}</td>
-            <td>
-              <q-badge
-                :color="
-                  acc.status === 'active'
-                    ? 'positive'
-                    : acc.status === 'inactive'
-                      ? 'negative'
-                      : 'warning'
-                "
-              >
-                {{ acc.status }}
-              </q-badge>
-            </td>
-          </tr>
-        </tbody>
-      </q-markup-table>
-    </div>
+
     <div>
       <router-view />
     </div>
