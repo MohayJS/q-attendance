@@ -33,12 +33,15 @@ export const useClassStore = defineStore('Class', {
       await firebaseService.deleteRecord('classes', key);
       this.classes = this.classes.filter(c => c.key !== key);
     },
+
     async saveClass(payload: ClassModel) {
       const record = await firebaseService.createRecord('classes', payload);
       if (record) {
         this.classes.push(record);
       }
+      console.log(record);
     },
+
     async enroll(payload: {
       class: ClassModel,
       student: UserModel
@@ -51,6 +54,7 @@ export const useClassStore = defineStore('Class', {
       }
     },
     async join(payload: { class: ClassModel, teacher: UserModel}) {
+      console.log(payload);
       const record = await firebaseService.createRecord('teachers', payload.teacher, `/classes/${payload.class.key}`);
       const cls = this.classes.find(c => c.key == payload.class.key);
       if (record && cls) {

@@ -41,11 +41,6 @@ async function saveClass() {
 
     await classStore.saveClass(newClass);
 
-    await classStore.join({
-      class: newClass,
-      teacher: authStore.currentAccount
-    });
-
     await classStore.loadClassesByTeacher(authStore.currentAccount?.key || '');
   }
   
