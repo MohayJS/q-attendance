@@ -7,5 +7,6 @@ export interface ClassModel {
   teachers?: UserModel[];
   section: string;
   academicYear: string;
-  enrolled?: UserModel[];
+  enrolled?: UserModel[];  // Keeping for backward compatibility
+  enrolledStudents?: string[]; // Array of student keys
 }

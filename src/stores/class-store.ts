@@ -22,6 +22,24 @@ export const useClassStore = defineStore('Class', {
       this.classes = filteredRecords;
       return this.classes;
     },
+
+    async loadClassesByStudent(key: string) {
+      const allClasses = await firebaseService.findRecords('classes');
+
+      const enrolledClasses = allClasses.filter(cls =>
+        cls.enrolledStudents?.includes(key)
+      );
+
+      this.classes = enrolledClasses;
+      return this.classes;
+    },
+
+    async findClassByCode(classCode: string) {
+      const records = await firebaseService.findRecords('classes');
+      const foundClass = records.find(record => record.classCode === classCode);
+
+      return foundClass;
+    },
     async loadClass(key: string) {
       const record = await firebaseService.getRecord('classes', key);
       if (record) {
@@ -46,11 +64,30 @@ export const useClassStore = defineStore('Class', {
       class: ClassModel,
       student: UserModel
     }) {
-      const record = await firebaseService.createRecord('enrolled', payload.student, `/classes/${payload.class.key}`);
-      const cls = this.classes.find(c => c.key == payload.class.key);
-      if (record && cls) {
-        cls.enrolled = cls.enrolled || [];
-        cls.enrolled.push(record);
+      // Get the current class
+      const cls = this.classes.find(c => c.key === payload.class.key) || payload.class;
+
+      // Initialize enrolledStudents array if it doesn't exist
+      if (!cls.enrolledStudents) {
+        cls.enrolledStudents = [];
+      }
+
+      // Add student key to enrolledStudents array if not already there
+      if (payload.student.key && !cls.enrolledStudents.includes(payload.student.key)) {
+        cls.enrolledStudents.push(payload.student.key);
+
+        // Update the class in Firestore
+        if (cls.key) {
+          await firebaseService.updateRecord('classes', cls.key, {
+            enrolledStudents: cls.enrolledStudents
+          });
+        }
+
+        // For backward compatibility, also update the enrolled array
+        if (!cls.enrolled) {
+          cls.enrolled = [];
+        }
+        cls.enrolled.push(payload.student);
       }
     },
     async join(payload: { class: ClassModel, teacher: UserModel}) {
