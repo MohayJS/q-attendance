@@ -132,19 +132,33 @@ export const useAttendanceStore = defineStore('attendance', {
           meeting.checkIns = [];
         }
 
-        if (payload.checkInKey) {
-          const checkInIndex = meeting.checkIns.findIndex(c => c.key === payload.checkInKey);
+        let checkInIndex = -1;
 
-          if (checkInIndex !== -1 && meeting.checkIns[checkInIndex]) {
-            meeting.checkIns[checkInIndex].status = payload.status;
+        if (payload.checkInKey) {
+          checkInIndex = meeting.checkIns.findIndex(c => c.key === payload.checkInKey);
+        }
+
+        if (checkInIndex === -1) {
+          checkInIndex = meeting.checkIns.findIndex(c => c.student === payload.student);
+        }
+
+        if (checkInIndex !== -1 && meeting.checkIns[checkInIndex]) {
+          const existingRecord = meeting.checkIns[checkInIndex]!;
+          existingRecord.status = payload.status;
+          if (existingRecord.status !== 'check-in' && payload.status !== 'check-in') {
+            existingRecord.markedInTime = date.formatDate(new Date(), 'HH:mm:ss');
           }
         } else {
-          const checkInRecord: MeetingCheckInModel = {
+          const checkInRecord = {
             key: '',
             student: payload.student,
             checkInTime: date.formatDate(new Date(), 'HH:mm:ss'),
             status: payload.status
-          };
+          } as MeetingCheckInModel;
+
+          if (payload.status !== 'check-in') {
+            checkInRecord.markedInTime = date.formatDate(new Date(), 'HH:mm:ss');
+          }
 
           meeting.checkIns.push(checkInRecord);
         }
@@ -181,6 +195,31 @@ export const useAttendanceStore = defineStore('attendance', {
         return true;
       } catch (error) {
         console.error('Error concluding meeting:', error);
+        throw error;
+      }
+    },
+
+    async reopenMeeting(meetingKey: string) {
+      try {
+        const meetingIndex = this.meetings.findIndex(m => m.key === meetingKey);
+        if (meetingIndex === -1) {
+          throw new Error('Meeting not found');
+        }
+
+        const meeting = this.meetings[meetingIndex];
+        if (!meeting) {
+          throw new Error('Meeting not found');
+        }
+
+        meeting.status = 'open';
+
+        await firebaseService.updateRecord('meetings', meetingKey, {
+          status: 'open'
+        });
+
+        return true;
+      } catch (error) {
+        console.error('Error reopening meeting:', error);
         throw error;
       }
     },

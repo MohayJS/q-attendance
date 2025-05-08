@@ -3,12 +3,14 @@ import { useClassStore } from 'src/stores/class-store';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { useUsersStore } from 'src/stores/user-store';
 import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { UserModel } from 'src/models/user.models';
-import { uid, QTableColumn } from 'quasar';
+import { uid, QTableColumn, Notify } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
+import AttendanceDetailsDialog from 'src/components/AttendanceDetailsDialog.vue';
 
 const route = useRoute();
+const router = useRouter();
 const classStore = useClassStore();
 const attendanceStore = useAttendanceStore();
 const usersStore = useUsersStore();
@@ -29,6 +31,8 @@ const studentName = ref('');
 const studentEmail = ref('');
 
 const attendanceHistory = ref<ClassMeetingModel[]>([]);
+const selectedMeeting = ref<ClassMeetingModel | null>(null);
+const showAttendanceDetails = ref(false);
 const attendanceColumns: QTableColumn[] = [
   {
     name: 'date',
@@ -50,6 +54,13 @@ const attendanceColumns: QTableColumn[] = [
     align: 'center',
     label: 'Present',
     field: (row: ClassMeetingModel) => row.checkIns?.filter(c => c.status === 'present' || c.status === 'check-in').length || 0,
+    sortable: true
+  },
+  {
+    name: 'late',
+    align: 'center',
+    label: 'Late',
+    field: (row: ClassMeetingModel) => row.checkIns?.filter(c => c.status === 'late').length || 0,
     sortable: true
   },
   {
@@ -136,7 +147,35 @@ async function removeStudent(student: UserModel) {
 }
 
 function viewAttendanceDetails(meeting: ClassMeetingModel) {
-  console.log(meeting);
+  selectedMeeting.value = meeting;
+  showAttendanceDetails.value = true;
+}
+
+function startRollCall(meeting: ClassMeetingModel) {
+  if (meeting.status !== 'open') {
+    Notify.create({
+      message: 'Roll call can only be performed for open attendance sessions',
+      color: 'negative',
+      icon: 'error',
+      position: 'top',
+      timeout: 3000
+    });
+    return;
+  }
+
+  void router.push({
+    name: 'rollCall',
+    params: {
+      classKey: route.params.classKey as string,
+      meetingKey: meeting.key
+    }
+  });
+}
+
+async function handleAttendanceUpdated() {
+  if (activeClass.value?.key) {
+    await loadAttendanceHistory();
+  }
 }
 </script>
 
@@ -240,7 +279,7 @@ function viewAttendanceDetails(meeting: ClassMeetingModel) {
           :rows="attendanceHistory"
           :columns="attendanceColumns"
           row-key="key"
-          :rows-per-page-options="[10, 20, 50]"
+          :rows-per-page-options="[30, 40, 50]"
           v-if="attendanceHistory.length > 0"
         >
           <template v-slot:body-cell-status="props">
@@ -253,9 +292,21 @@ function viewAttendanceDetails(meeting: ClassMeetingModel) {
 
           <template v-slot:body-cell-actions="props">
             <q-td :props="props">
-              <q-btn color="primary" icon="visibility" dense round @click="viewAttendanceDetails(props.row)">
-                <q-tooltip>View Details</q-tooltip>
-              </q-btn>
+              <div>
+                <q-btn
+                  v-if="props.row.status === 'open'"
+                  color="green"
+                  icon="how_to_reg"
+                  dense
+                  round
+                  @click="startRollCall(props.row)"
+                >
+                  <q-tooltip>Start Roll Call</q-tooltip>
+                </q-btn>
+                <q-btn v-else color="primary" icon="visibility" dense round @click="viewAttendanceDetails(props.row)">
+                  <q-tooltip>View Details</q-tooltip>
+                </q-btn>
+              </div>
             </q-td>
           </template>
         </q-table>
@@ -300,6 +351,14 @@ function viewAttendanceDetails(meeting: ClassMeetingModel) {
         </q-form>
       </q-card>
     </q-dialog>
+
+    <!-- Attendance Details Dialog -->
+    <attendance-details-dialog
+      v-if="selectedMeeting"
+      :meeting="selectedMeeting"
+      v-model:show="showAttendanceDetails"
+      @attendance-updated="handleAttendanceUpdated"
+    />
   </q-page>
 </template>
 
