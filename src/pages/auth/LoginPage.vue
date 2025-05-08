@@ -8,6 +8,7 @@ const router = useRouter();
 
 const username = ref('');
 const password = ref('');
+const askRole = ref(false);
 
 async function onSubmit() {
   const auth = await authStore.login(username.value, password.value);
@@ -16,7 +17,17 @@ async function onSubmit() {
   }
 }
 async function continueWithGoogle() {
-  await authStore.loginWithGoogle();
+  const user = await authStore.loginWithGoogle();
+
+  if (user) {
+    askRole.value = true;
+  } else {
+    const user = await authStore.authorizeUser();
+    await router.replace({ name: `${user?.role}` });
+  }
+}
+async function registerWithGoogle(role: string) {
+  await authStore.authorizeUser('', role);
   await router.replace({ name: `${authStore.currentAccount?.role}` });
 }
 </script>
@@ -28,7 +39,7 @@ async function continueWithGoogle() {
       class="my-card text-white q-ma-xl"
       style="background: radial-gradient(circle, #efeeea 0%, #f8f4e1 100%)"
     >
-      <q-card-section>
+      <q-card-section v-if="!askRole">
         <img class="msupic" src="/src/assets/msulogo2.png" height="80px" width="80px" />
         <h4 class="signin-text">Please sign-in your account if mayron</h4>
         <q-form @submit="onSubmit">
@@ -51,6 +62,13 @@ async function continueWithGoogle() {
           <q-btn class="login-button" @click="continueWithGoogle()">Continue with Google</q-btn>
         </q-card-actions>
       </q-card-section>
+      <div v-else>
+        Select your role
+        <q-btn @click="registerWithGoogle('student')">student</q-btn>
+        <q-btn @click="registerWithGoogle('teacher')">teacher</q-btn>
+        <q-btn @click="registerWithGoogle('supervisor')">supervisor</q-btn>
+        <q-btn @click="registerWithGoogle('admin')">admin</q-btn>
+      </div>
     </q-card>
 
 
@@ -61,7 +79,7 @@ async function continueWithGoogle() {
 </template>
 <style scoped>
 .top-border {
-  border-top: 5px solid #800000; /* blue border */
+  border-top: 5px solid #800000;
   width: 100%;
   font-weight: bolder;
   text-align: center;
@@ -83,8 +101,8 @@ async function continueWithGoogle() {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200vh; /* full screen height */
-  background-color: #f8f4e1; /* optional background */
+  height: 200vh; 
+  background-color: #f8f4e1;
   flex-direction: column;
 }
 .msupic{

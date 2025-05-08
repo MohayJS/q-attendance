@@ -5,28 +5,39 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const authStore = useAuthStore();
-console.log(authStore)
 
 const username = ref('');
 const password = ref('');
 const fullName = ref('');
 const askRole = ref(false);
+const registerWithGoogle = ref(false);
 
 function onSubmit() {
   if (username.value && password.value && fullName.value) {
     askRole.value = true;
   }
-  // await authStore.register(username.value, password.value);
 }
 
 async function register(role: string) {
-  await authStore.register(username.value, password.value, fullName.value, role);
-  await router.replace({ name: `${role}` });
+  if (!registerWithGoogle.value) {
+    await authStore.register(username.value, password.value, fullName.value, role);
+    await router.replace({ name: `${role}` });
+  } else {
+    const user = await authStore.authorizeUser('', role);
+    await router.replace({ name: `${user?.role}` });
+  }
 }
 
 async function continueWithGoogle() {
-  // await authStore.loginWithGoogle();
+  const user = await authStore.loginWithGoogle();
 
+  if (user) {
+    askRole.value = true;
+    registerWithGoogle.value = true;
+  } else {
+    const user = await authStore.authorizeUser();
+    await router.replace({ name: `${user?.role}` });
+  }
 }
 
 </script>

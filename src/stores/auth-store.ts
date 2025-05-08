@@ -17,7 +17,18 @@ export const useAuthStore = defineStore('auth', {
     },
     async loginWithGoogle() {
       await firebaseService.signInWithGoogle();
-      return this.authorizeUser();
+      const user = await firebaseService.authorizeUser();
+      if (user) {
+        const userKey = user.uid;
+        const userData = await firebaseService.getRecord('users', userKey);
+
+        if (userData) {
+          return false;
+        }
+
+        return true;
+      }
+      return false;
     },
     async register(email: string, password: string, displayName: string, role: string) {
       await firebaseService.registerWithEmailPassword(email, password);
