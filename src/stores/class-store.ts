@@ -64,26 +64,21 @@ export const useClassStore = defineStore('Class', {
       class: ClassModel,
       student: UserModel
     }) {
-      // Get the current class
       const cls = this.classes.find(c => c.key === payload.class.key) || payload.class;
 
-      // Initialize enrolledStudents array if it doesn't exist
       if (!cls.enrolledStudents) {
         cls.enrolledStudents = [];
       }
 
-      // Add student key to enrolledStudents array if not already there
       if (payload.student.key && !cls.enrolledStudents.includes(payload.student.key)) {
         cls.enrolledStudents.push(payload.student.key);
 
-        // Update the class in Firestore
         if (cls.key) {
           await firebaseService.updateRecord('classes', cls.key, {
             enrolledStudents: cls.enrolledStudents
           });
         }
 
-        // For backward compatibility, also update the enrolled array
         if (!cls.enrolled) {
           cls.enrolled = [];
         }
@@ -97,6 +92,47 @@ export const useClassStore = defineStore('Class', {
       if (record && cls) {
         cls.teachers = cls.teachers || [];
         cls.teachers.push(record);
+      }
+    },
+
+    async unenroll(payload: {
+      classKey: string,
+      studentKey: string
+    }) {
+      try {
+        const cls = this.classes.find(c => c.key === payload.classKey);
+
+        if (!cls || !cls.key) {
+          console.error('Class not found');
+          return false;
+        }
+
+        if (!cls.enrolledStudents) {
+          console.error('No enrolled students found');
+          return false;
+        }
+
+        if (!cls.enrolledStudents.includes(payload.studentKey)) {
+          console.error('Student not enrolled in this class');
+          return false;
+        }
+
+        cls.enrolledStudents = cls.enrolledStudents.filter(key => key !== payload.studentKey);
+
+        await firebaseService.updateRecord('classes', cls.key, {
+          enrolledStudents: cls.enrolledStudents
+        });
+
+        if (cls.enrolled) {
+          cls.enrolled = cls.enrolled.filter(student => student.key !== payload.studentKey);
+        }
+
+        this.classes = this.classes.filter(c => !(c.key === payload.classKey && c.enrolledStudents && !c.enrolledStudents.includes(payload.studentKey)));
+
+        return true;
+      } catch (error) {
+        console.error('Error unenrolling student:', error);
+        return false;
       }
     }
   },

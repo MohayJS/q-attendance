@@ -3,7 +3,8 @@ import { useClassStore } from 'src/stores/class-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Notify } from 'quasar';
+import { Notify, Dialog } from 'quasar';
+import { ClassModel } from 'src/models/class.models';
 
 const classStore = useClassStore();
 const authStore = useAuthStore();
@@ -97,6 +98,77 @@ async function enrollInClass() {
 function navigateToClass(cls: { key?: string }) {
   void router.push({ name: 'attendance', params: { classKey: cls.key } });
 }
+
+async function unenrollCourse(cls: ClassModel) {
+  if (!cls.key || !authStore.currentAccount?.key) {
+    return;
+  }
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      Dialog.create({
+        title: 'Confirm Unenrollment',
+        message: `Are you sure you want to unenroll from ${cls.name}?`,
+        persistent: true,
+        color: 'primary',
+        ok: {
+          label: 'Confirm',
+          color: 'negative',
+          unelevated: true
+        },
+        cancel: {
+          label: 'Cancel',
+          color: 'grey',
+          flat: true
+        }
+      }).onOk(() => {
+        resolve();
+      }).onCancel(() => {
+        reject(new Error('Cancelled'));
+      }).onDismiss(() => {
+        reject(new Error('Dismissed'));
+      });
+    });
+  } catch {
+    return;
+  }
+
+  try {
+    const success = await classStore.unenroll({
+      classKey: cls.key,
+      studentKey: authStore.currentAccount.key
+    });
+
+    if (success) {
+      Notify.create({
+        message: `Successfully unenrolled from ${cls.name}`,
+        color: 'green',
+        icon: 'check_circle',
+        position: 'top',
+        timeout: 3000
+      });
+
+      await loadStudentClasses();
+    } else {
+      Notify.create({
+        message: 'Failed to unenroll from class',
+        color: 'negative',
+        icon: 'error',
+        position: 'top',
+        timeout: 3000
+      });
+    }
+  } catch (error) {
+    console.error('Error unenrolling from class:', error);
+    Notify.create({
+      message: 'An error occurred while unenrolling',
+      color: 'negative',
+      icon: 'error',
+      position: 'top',
+      timeout: 3000
+    });
+  }
+}
 </script>
 
 <template>
@@ -125,6 +197,12 @@ function navigateToClass(cls: { key?: string }) {
               <q-item-section>
                 <q-item-label>{{ theClass.name }} - {{ theClass.section }}</q-item-label>
                 <q-item-label caption>{{ theClass.academicYear }}</q-item-label>
+              </q-item-section>
+
+              <q-item-section side>
+                <q-btn color="red" icon="delete" dense round @click.stop="unenrollCourse(theClass)">
+                  <q-tooltip>Unenroll</q-tooltip>
+                </q-btn>
               </q-item-section>
             </q-item>
 
