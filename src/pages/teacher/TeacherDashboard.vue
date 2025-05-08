@@ -15,7 +15,7 @@ const className = ref('');
 const classSection = ref('');
 
 const teacherClasses = computed(() => {
-  return classStore.classes.filter(cls => 
+  return classStore.classes.filter(cls =>
     cls.teachers?.some(teacher => teacher.key === authStore.currentAccount?.key)
   );
 });
@@ -28,7 +28,7 @@ function addNewClass() {
   showNewClassDialog.value = true;
 }
 
-async function saveClass() {  
+async function saveClass() {
   if (authStore.currentAccount) {
     const newClass: ClassModel = {
       key: uid(),
@@ -43,7 +43,7 @@ async function saveClass() {
 
     await classStore.loadClassesByTeacher(authStore.currentAccount?.key || '');
   }
-  
+
   className.value = '';
   showNewClassDialog.value = false;
 }
@@ -54,7 +54,7 @@ async function deleteCourse(cls: ClassModel) {
 }
 
 function navigateToClass(cls: ClassModel) {
-  void router.push({ name: 'attendance', params: { classKey: cls.key } });
+  void router.push({ name: 'teacherClass', params: { classKey: cls.key } });
 }
 
 </script>
@@ -94,16 +94,16 @@ function navigateToClass(cls: ClassModel) {
           </q-card-section>
         </q-card>
       </div>
-      
+
       <div class="col-12">
         <q-card>
           <q-card-section>
             <div class="text-h6">My Classes</div>
           </q-card-section>
-          
+
           <q-list bordered separator>
-            <q-item 
-              v-for="theClass in teacherClasses" 
+            <q-item
+              v-for="theClass in teacherClasses"
               :key="String(theClass.key)"
               clickable
               v-ripple
@@ -114,12 +114,12 @@ function navigateToClass(cls: ClassModel) {
                   {{ theClass.name[0] }}
                 </q-avatar>
               </q-item-section>
-              
+
               <q-item-section>
                 <q-item-label>{{ theClass.name }} - {{  theClass.section }}</q-item-label>
                 <q-item-label caption>{{ theClass.academicYear }} • {{ theClass.classCode }}</q-item-label>
               </q-item-section>
-              
+
               <q-item-section side>
                 <!-- <q-badge color="primary">{{ theClass.enrolled?.length || 0 }} students</q-badge> -->
                 <q-btn color="red" icon="delete" dense round @click.stop="deleteCourse(theClass)">
@@ -127,7 +127,7 @@ function navigateToClass(cls: ClassModel) {
                 </q-btn>
               </q-item-section>
             </q-item>
-            
+
             <q-item v-if="teacherClasses.length === 0">
               <q-item-section>
                 <q-item-label class="text-center text-grey">No classes yet</q-item-label>
@@ -137,27 +137,27 @@ function navigateToClass(cls: ClassModel) {
         </q-card>
       </div>
     </div>
-    
+
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
       <q-btn fab icon="add" color="accent" @click="addNewClass()" />
     </q-page-sticky>
-    
+
     <q-dialog v-model="showNewClassDialog" persistent>
       <q-card style="min-width: 350px">
         <q-card-section>
           <div class="text-h6">New Class</div>
         </q-card-section>
-        
+
         <q-card-section>
-          <q-input 
-            v-model="className" 
+          <q-input
+            v-model="className"
             label="Class Name"
             :rules="[
               v => !!v || 'Class name is required',
               v => v.length >= 3 || 'Name must be at least 3 characters'
             ]"
           />
-          <q-input 
+          <q-input
            v-model="classSection"
            label="Class Section"
            :rules="[
@@ -165,7 +165,7 @@ function navigateToClass(cls: ClassModel) {
             ]"
           />
         </q-card-section>
-        
+
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="negative" v-close-popup />
           <q-btn flat label="Create" color="positive" @click="saveClass" :disable="!className" />

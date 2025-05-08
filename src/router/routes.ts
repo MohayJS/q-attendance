@@ -26,6 +26,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/TeacherLayout.vue'),
     children: [
       { name: 'teacher', path: '', component: () => import('pages/teacher/TeacherDashboard.vue'), meta: { teacher: true } },
+      { name: 'teacherClass', path: 'class/:classKey', component: () => import('pages/teacher/TeacherClassPage.vue'), meta: { teacher: true } },
+      { name: 'createAttendance', path: 'class/:classKey/create-attendance', component: () => import('pages/teacher/CreateAttendancePage.vue'), meta: { teacher: true } },
     ]
   },
   // Supervisor Page

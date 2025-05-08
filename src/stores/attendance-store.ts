@@ -18,12 +18,38 @@ export const useAttendanceStore = defineStore('attendance', {
         this.meetings.push(record);
       }
     },
+
+    async loadClassMeetings(classKey: string) {
+      try {
+        // Fetch meetings from Firebase for the specific class
+        const records = await firebaseService.findRecords('meetings');
+
+        // Filter meetings for the specific class
+        this.meetings = records.filter(meeting => meeting.classKey === classKey);
+        return this.meetings;
+      } catch (error) {
+        console.error('Error loading class meetings:', error);
+        return [];
+      }
+    },
+
+    // Check if a meeting already exists for a specific class, date and time
+    async checkExistingMeeting(classKey: string, dateTime: string) {
+      // Make sure we have the latest meetings
+      await this.loadClassMeetings(classKey);
+
+      // Check if a meeting already exists for this date and time
+      return this.meetings.some(meeting =>
+        meeting.classKey === classKey &&
+        meeting.date === dateTime
+      );
+    },
+
     async checkInAttendance(payload: {
       student: string;
       meeting: ClassMeetingModel,
       status: MeetingCheckInModel['status']
     }) {
-
       await firebaseService.createRecord('check-ins', {
         checkInTime: date.formatDate(new Date(), 'HH:mm:ss'),
         key: '',
