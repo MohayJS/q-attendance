@@ -18,6 +18,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/StudentLayout.vue'),
     children: [
       { name: 'student', path: '', component: () => import('pages/student/StudentDashboard.vue'), meta: { student: true } },
+      { name: 'studentClass', path: 'class/:classKey', component: () => import('pages/student/StudentClassPage.vue'), meta: { student: true } },
     ]
   },
   // Teacher Page

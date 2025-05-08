@@ -96,7 +96,7 @@ async function enrollInClass() {
 }
 
 function navigateToClass(cls: { key?: string }) {
-  void router.push({ name: 'attendance', params: { classKey: cls.key } });
+  void router.push({ name: 'studentClass', params: { classKey: cls.key } });
 }
 
 async function unenrollCourse(cls: ClassModel) {
