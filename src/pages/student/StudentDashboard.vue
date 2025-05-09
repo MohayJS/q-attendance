@@ -16,7 +16,7 @@ const isLoading = ref(false);
 const codeError = ref('');
 
 const studentClasses = computed(() => {
-  return classStore.classes;
+  return classStore.teaching;
 });
 
 const handleEnrollDialog = () => {
@@ -35,7 +35,7 @@ onUnmounted(() => {
 
 async function loadStudentClasses() {
   if (authStore.currentAccount?.key) {
-    await classStore.loadClassesByStudent(authStore.currentAccount.key);
+    await classStore.loadUserClasses(authStore.currentAccount.key);
   }
 }
 

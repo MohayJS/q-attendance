@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { date, uid } from 'quasar';
+import { useAuthStore } from 'src/stores/auth-store';
 import { useClassStore } from 'src/stores/class-store';
 import { computed, ref } from 'vue';
 
 const classStore = useClassStore();
+const authStore = useAuthStore();
 const classes = computed(() => {
-  return classStore.classes;
+  return classStore.teaching;
 });
 const showNewClassDialog = ref(false);
 const className = ref('');
@@ -13,15 +15,20 @@ function addNewClass() {
   showNewClassDialog.value = true;
 }
 async function saveClass() {
-  await classStore.saveClass({
-    key: uid(),
-    name: className.value,
-    academicYear: date.formatDate(new Date(), 'YYYY'),
-    classCode: 'ABCD',
-    section: 'XY',
-  });
-  className.value = '';
-  showNewClassDialog.value = false;
+  if (authStore.currentAccount) {
+    await classStore.saveClass(
+      {
+        key: uid(),
+        name: className.value,
+        academicYear: date.formatDate(new Date(), 'YYYY'),
+        classCode: 'ABCD',
+        section: 'XY',
+      },
+      authStore.currentAccount,
+    );
+    className.value = '';
+    showNewClassDialog.value = false;
+  }
 }
 </script>
 <template>

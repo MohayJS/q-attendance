@@ -10,7 +10,7 @@ const classStore = useClassStore();
 const activeClass = computed(() => {
   if (typeof route.params?.classKey == 'string') {
     const classKey = route.params.classKey;
-    return (classStore.classes || []).find((c) => c.key == classKey);
+    return (classStore.teaching || []).find((c) => c.key == classKey);
   }
   return undefined;
 });
@@ -42,6 +42,7 @@ async function saveStudent() {
     await classStore.enroll({
       class: activeClass.value,
       student: {
+        key: '',
         email: 'dummy@mail.com',
         fullName: payload.student,
       },

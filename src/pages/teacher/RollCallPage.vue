@@ -72,11 +72,11 @@ async function loadMeetingData(meetingKey: string, classKey: string) {
 }
 
 async function loadEnrolledStudents(classKey: string) {
-  if (!classStore.classes.some((c) => c.key === classKey)) {
+  if (!classStore.teaching.some((c) => c.key === classKey)) {
     await classStore.loadClass(classKey);
   }
 
-  const activeClass = classStore.classes.find((c) => c.key === classKey);
+  const activeClass = classStore.teaching.find((c) => c.key === classKey);
 
   if (!activeClass?.enrolled?.length) {
     enrolledStudents.value = [];

@@ -7,7 +7,6 @@ import { useRoute } from 'vue-router';
 import { date, Notify } from 'quasar';
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
 
-
 interface StudentAttendanceRecord extends MeetingCheckInModel {
   date?: string;
 }
@@ -21,38 +20,32 @@ const tab = ref('check-in');
 const isCheckingIn = ref(false);
 const studentAttendanceHistory = ref<StudentAttendanceRecord[]>([]);
 
-
 const activeClass = computed(() => {
   if (typeof route.params?.classKey === 'string') {
     const classKey = route.params.classKey;
-    return (classStore.classes || []).find((c) => c.key === classKey);
+    return (classStore.teaching || []).find((c) => c.key === classKey);
   }
   return undefined;
 });
-
 
 const currentStudent = computed(() => {
   return authStore.currentAccount;
 });
 
-
 const openAttendanceSessions = computed(() => {
-  return attendanceStore.meetings.filter(meeting => {
-
+  return attendanceStore.meetings.filter((meeting) => {
     if (meeting.status !== 'open') return false;
-    
-    if (meeting.checkIns && meeting.checkIns.some(checkIn =>
-      checkIn.student === currentStudent.value?.key
-    )) {
+
+    if (
+      meeting.checkIns &&
+      meeting.checkIns.some((checkIn) => checkIn.student === currentStudent.value?.key)
+    ) {
       return false;
     }
 
     return true;
   });
 });
-
-
-
 
 onMounted(async () => {
   if (typeof route.params?.classKey === 'string') {
@@ -61,7 +54,6 @@ onMounted(async () => {
   }
 });
 
-
 async function loadAttendanceSessions() {
   if (activeClass.value?.key) {
     await attendanceStore.loadClassMeetings(activeClass.value.key);
@@ -69,30 +61,28 @@ async function loadAttendanceSessions() {
   }
 }
 
-
 function loadStudentAttendanceHistory() {
   if (!currentStudent.value?.key || !activeClass.value?.key) return;
   const history: StudentAttendanceRecord[] = [];
-  
-  attendanceStore.meetings.forEach(meeting => {
+
+  attendanceStore.meetings.forEach((meeting) => {
     const studentCheckIn = meeting.checkIns?.find(
-      checkIn => checkIn.student === currentStudent.value?.key
+      (checkIn) => checkIn.student === currentStudent.value?.key,
     );
 
     if (studentCheckIn) {
       history.push({
         ...studentCheckIn,
-        
-        date: meeting.date
+
+        date: meeting.date,
       });
     } else if (meeting.status === 'concluded') {
-      
       history.push({
         key: '',
         student: currentStudent.value?.key || '',
         checkInTime: '-',
         status: 'absent',
-        date: meeting.date
+        date: meeting.date,
       });
     }
   });
@@ -106,7 +96,7 @@ async function checkInToSession(meeting: ClassMeetingModel) {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
     return;
   }
@@ -118,7 +108,7 @@ async function checkInToSession(meeting: ClassMeetingModel) {
       color: 'red',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
     return;
   }
@@ -128,15 +118,16 @@ async function checkInToSession(meeting: ClassMeetingModel) {
     await attendanceStore.checkInAttendance({
       student: currentStudent.value.key,
       meeting: meeting,
-      status: 'check-in' 
+      status: 'check-in',
     });
 
     Notify.create({
-      message: 'Successfully checked in to class. Your status is "Checked In (Not Yet Present)" until the teacher confirms your attendance.',
+      message:
+        'Successfully checked in to class. Your status is "Checked In (Not Yet Present)" until the teacher confirms your attendance.',
       color: 'positive',
       icon: 'check_circle',
       position: 'top',
-      timeout: 5000
+      timeout: 5000,
     });
 
     await loadAttendanceSessions();
@@ -147,7 +138,7 @@ async function checkInToSession(meeting: ClassMeetingModel) {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
   } finally {
     isCheckingIn.value = false;
@@ -155,10 +146,10 @@ async function checkInToSession(meeting: ClassMeetingModel) {
 }
 
 function validateCheckInTime(classDateString: string): { valid: boolean; message: string } {
-  try {    
+  try {
     const classDateTime = new Date(classDateString);
     const currentTime = new Date();
-    
+
     if (currentTime > classDateTime) {
       const graceEndTime = new Date(classDateTime.getTime() + 30 * 60 * 1000);
 
@@ -168,7 +159,8 @@ function validateCheckInTime(classDateString: string): { valid: boolean; message
 
       return {
         valid: false,
-        message: 'Check-in is only available before or within 30 minutes of the scheduled class time.'
+        message:
+          'Check-in is only available before or within 30 minutes of the scheduled class time.',
       };
     }
 
@@ -177,11 +169,10 @@ function validateCheckInTime(classDateString: string): { valid: boolean; message
     console.error('Error validating check-in time:', error);
     return {
       valid: false,
-      message: 'Unable to validate check-in time. Please try again.'
+      message: 'Unable to validate check-in time. Please try again.',
     };
   }
 }
-
 
 function formatDate(dateString: string | undefined) {
   if (!dateString) return 'Unknown date';
@@ -192,7 +183,6 @@ function formatDate(dateString: string | undefined) {
     return dateString;
   }
 }
-
 
 function getStatusColor(status: MeetingCheckInModel['status']): string {
   switch (status) {
@@ -208,7 +198,6 @@ function getStatusColor(status: MeetingCheckInModel['status']): string {
       return 'grey';
   }
 }
-
 
 function getStatusLabel(status: MeetingCheckInModel['status']): string {
   switch (status) {
@@ -232,9 +221,7 @@ function getStatusLabel(status: MeetingCheckInModel['status']): string {
       <q-card class="q-mb-md">
         <q-card-section>
           <div class="text-h6">{{ activeClass?.name || 'Class' }}</div>
-          <div v-if="activeClass" class="text-subtitle2">
-            Section: {{ activeClass.section }}
-          </div>
+          <div v-if="activeClass" class="text-subtitle2">Section: {{ activeClass.section }}</div>
         </q-card-section>
       </q-card>
 
@@ -294,9 +281,7 @@ function getStatusLabel(status: MeetingCheckInModel['status']): string {
             <q-item v-for="record in studentAttendanceHistory" :key="record.key" class="q-my-sm">
               <q-item-section>
                 <q-item-label>{{ formatDate(record.date) }}</q-item-label>
-                <q-item-label caption>
-                  Check-in time: {{ record.checkInTime }}
-                </q-item-label>
+                <q-item-label caption> Check-in time: {{ record.checkInTime }} </q-item-label>
               </q-item-section>
 
               <q-item-section side>

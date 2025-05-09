@@ -1,31 +1,32 @@
 <script setup lang="ts">
 import { useClassStore } from 'src/stores/class-store';
 import { useAttendanceStore } from 'src/stores/attendance-store';
-import { useUsersStore } from 'src/stores/user-store';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { UserModel } from 'src/models/user.models';
 import { uid, QTableColumn, Notify } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
 import AttendanceDetailsDialog from 'src/components/AttendanceDetailsDialog.vue';
+import { ClassModel } from 'src/models/class.models';
 
 const route = useRoute();
 const router = useRouter();
 const classStore = useClassStore();
 const attendanceStore = useAttendanceStore();
-const usersStore = useUsersStore();
 
 const tab = ref('students');
 
 const activeClass = computed(() => {
-  if (typeof route.params?.classKey === 'string') {
-    const classKey = route.params.classKey;
-    return (classStore.classes || []).find((c) => c.key === classKey);
+  if (route.params?.classKey === currentClass.value?.key) {
+    return currentClass.value;
   }
   return undefined;
 });
 
-const enrolledStudents = ref<UserModel[]>([]);
+const currentClass = ref<ClassModel>();
+const enrolledStudents = computed(() => {
+  return (activeClass.value?.enrolled || []).filter((e) => e.status == 'active');
+});
 const showNewStudentDialog = ref(false);
 const studentName = ref('');
 const studentEmail = ref('');
@@ -83,26 +84,10 @@ const attendanceColumns: QTableColumn[] = [
 
 onMounted(async () => {
   if (typeof route.params?.classKey === 'string') {
-    await classStore.loadClass(route.params.classKey);
-    await loadEnrolledStudents();
+    currentClass.value = await classStore.loadClass(route.params.classKey);
     await loadAttendanceHistory();
   }
 });
-
-async function loadEnrolledStudents() {
-  if (!activeClass.value?.enrolled?.length) {
-    enrolledStudents.value = [];
-    return;
-  }
-
-  if (usersStore.users.length === 0) {
-    await usersStore.loadUsers();
-  }
-
-  enrolledStudents.value = usersStore.users.filter((user) =>
-    activeClass.value?.enrolled?.find((e) => e.key == user.key || ''),
-  );
-}
 
 async function loadAttendanceHistory() {
   if (activeClass.value?.key) {
@@ -128,8 +113,6 @@ async function saveStudent() {
         fullName: studentName.value,
       },
     });
-
-    await loadEnrolledStudents();
   }
 
   showNewStudentDialog.value = false;
@@ -137,14 +120,10 @@ async function saveStudent() {
 
 async function removeStudent(student: UserModel) {
   if (activeClass.value && student.key) {
-    const result = await classStore.unenroll({
-      classKey: activeClass.value.key || '',
+    await classStore.unenroll({
+      classKey: activeClass.value.key,
       studentKey: student.key,
     });
-
-    if (result) {
-      await loadEnrolledStudents();
-    }
   }
 }
 

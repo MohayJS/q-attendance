@@ -1,11 +1,19 @@
+import { Entity } from './base.model';
 import type { UserModel } from './user.models';
 
-export interface ClassModel {
-  key?: string;
+export interface ClassModel extends Entity {
   name: string;
   classCode: string;
-  teachers?: UserModel[];
+  teachers?: UserModel[] | undefined;
   section: string;
   academicYear: string;
-  enrolled?: UserModel[];
+  enrolled?: UserModel[] | undefined;
+}
+
+
+export interface ClassKeepingModel extends Entity {
+  teaching: string[];
+  archivedTeaching: string[];
+  enrolled: string[];
+  archivedEnrolled: string[];
 }

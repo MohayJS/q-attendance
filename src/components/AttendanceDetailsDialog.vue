@@ -25,12 +25,12 @@ const enrolledStudentIds = ref<string[]>([]);
 
 onMounted(async () => {
   if (props.meeting.classKey) {
-    const existingClass = classStore.classes.find((c) => c.key === props.meeting.classKey);
+    const existingClass = classStore.teaching.find((c) => c.key === props.meeting.classKey);
     if (!existingClass) {
       await classStore.loadClass(props.meeting.classKey);
     }
 
-    const classData = classStore.classes.find((c) => c.key === props.meeting.classKey);
+    const classData = classStore.teaching.find((c) => c.key === props.meeting.classKey);
     if (classData?.enrolled) {
       enrolledStudentIds.value = classData.enrolled.map((e) => e.key!);
     }

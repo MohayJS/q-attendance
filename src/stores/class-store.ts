@@ -3,61 +3,92 @@ import type { ClassModel } from 'src/models/class.models';
 import type { UserModel } from 'src/models/user.models';
 import { firebaseService } from 'src/services/firebase-service';
 
+interface IState {
+  teaching: ClassModel[];
+  archivedTeaching: ClassModel[];
+  enrolled: ClassModel[];
+  archivedEnrolled: ClassModel[];
+}
 export const useClassStore = defineStore('Class', {
   state: () => ({
-    classes: [] as ClassModel[],
-  }),
+    teaching: [],
+    enrolled: [],
+    archivedEnrolled: [],
+    archivedTeaching: [],
+  } as IState),
 
   getters: {
 
   },
 
   actions: {
-    async loadClassesByTeacher(key: string) {
-      const records = await firebaseService.findRecords('classes');
-
-      const filteredRecords = records.filter((record) => {
-        return record.teachers?.some(teacher => teacher.key === key);
-      })
-      this.classes = filteredRecords;
-      return this.classes;
-    },
-
-    async loadClassesByStudent(key: string) {
-      const allClasses = await firebaseService.findRecords('classes');
-
-      const enrolledClasses = allClasses.filter(cls =>
-        cls.enrolled?.find(e => e.key == key)
-      );
-
-      this.classes = enrolledClasses;
-      return this.classes;
+    async loadUserClasses(userKey: string, loadArchived?: boolean) {
+      const classKeeping = await firebaseService.getRecord('class-keepings', userKey);
+      if (classKeeping) {
+        const classKeys = [...classKeeping.enrolled, ...classKeeping.teaching];
+        if (loadArchived) {
+          //TODO:limit size
+          classKeys.push(...classKeeping.archivedEnrolled, ...classKeeping.archivedTeaching);
+        }
+        const classes = await firebaseService.findRecords('classes', undefined, {
+          key: { 'in': classKeys }
+        });
+        this.enrolled = classes.filter(cls => classKeeping.enrolled.includes(cls.key));
+        this.teaching = classes.filter(cls => classKeeping.teaching.includes(cls.key));
+        this.archivedEnrolled = classes.filter(cls => classKeeping.archivedEnrolled.includes(cls.key));
+        this.archivedTeaching = classes.filter(cls => classKeeping.archivedTeaching.includes(cls.key));
+      } else {
+        await firebaseService.createRecord('class-keepings', {
+          key: userKey,
+          enrolled: [],
+          teaching: [],
+          archivedEnrolled: [],
+          archivedTeaching: [],
+        })
+        this.enrolled = [];
+        this.teaching = [];
+        this.archivedEnrolled = [];
+        this.archivedTeaching = [];
+      }
     },
 
     async findClassByCode(classCode: string) {
-      const records = await firebaseService.findRecords('classes');
+      const records = await firebaseService.findRecords('classes', undefined, {
+        classCode: { '==': classCode }
+      });
       const foundClass = records.find(record => record.classCode === classCode);
-
       return foundClass;
     },
     async loadClass(key: string) {
-      const record = await firebaseService.getRecord('classes', key);
+      const [record, enrolled, teachers] = await Promise.all([
+        firebaseService.getRecord('classes', key),
+        firebaseService.findRecords('enrolled', `/classes/${key}`),
+        firebaseService.findRecords('teachers', `/classes/${key}`)
+      ]);
       if (record) {
-        this.classes.push(record);
+        record.enrolled = enrolled;
+        record.teachers = teachers;
         return record;
       }
     },
     async deleteClass(key: string) {
       await firebaseService.deleteRecord('classes', key);
-      this.classes = this.classes.filter(c => c.key !== key);
+      this.teaching = this.teaching.filter(c => c.key !== key);
     },
 
-    async saveClass(payload: ClassModel) {
-      const record = await firebaseService.createRecord('classes', payload);
+    async saveClass(payload: ClassModel, teacher: UserModel) {
+      const record = await firebaseService.createRecord('classes', {
+        ...payload,
+        teachers: undefined,
+        enrolled: undefined
+      });
       if (record) {
-        this.classes.push(record);
+        this.teaching.push(record);
+        await this.join({
+          class: record,
+          teacher: teacher
+        })
       }
-      console.log(record);
     },
 
     async enroll(payload: {
@@ -65,18 +96,24 @@ export const useClassStore = defineStore('Class', {
       student: UserModel
     }) {
       const record = await firebaseService.createRecord('enrolled', payload.student, `/classes/${payload.class.key}`);
-      const cls = this.classes.find(c => c.key == payload.class.key);
+      const cls = this.enrolled.find(c => c.key == payload.class.key);
       if (record && cls) {
         cls.enrolled = cls.enrolled || [];
         cls.enrolled.push(record);
+        await firebaseService.updateRecord('class-keepings', payload.student.key, {
+          enrolled: cls.enrolled.map(e => e.key)
+        })
       }
     },
     async join(payload: { class: ClassModel, teacher: UserModel }) {
       const record = await firebaseService.createRecord('teachers', payload.teacher, `/classes/${payload.class.key}`);
-      const cls = this.classes.find(c => c.key == payload.class.key);
+      const cls = this.teaching.find(c => c.key == payload.class.key);
       if (record && cls) {
         cls.teachers = cls.teachers || [];
         cls.teachers.push(record);
+        await firebaseService.updateRecord('class-keepings', payload.teacher.key, {
+          enrolled: cls.teachers.map(e => e.key)
+        })
       }
     },
 
@@ -85,38 +122,23 @@ export const useClassStore = defineStore('Class', {
       studentKey: string
     }) {
       try {
-        const cls = this.classes.find(c => c.key === payload.classKey);
+        const cls = await this.loadClass(payload.classKey);
 
-        if (!cls || !cls.key) {
-          console.error('Class not found');
+        if (!cls || !cls.key || !cls.enrolled || !cls.enrolled.find(e => e.key == payload.studentKey)) {
           return false;
         }
+        await firebaseService.updateRecord('enrolled', payload.studentKey, {
+          status: 'inactive'
+        }, `/classes/${payload.classKey}`);
 
-        if (!cls.enrolled) {
-          console.error('No enrolled students found');
-          return false;
+        const teaching = this.teaching.find(c => c.key == cls.key);
+        const student = teaching?.enrolled?.find(e => e.key !== payload.studentKey);
+        if (teaching && student) {
+          student.status = 'inactive';
         }
-
-        if (!cls.enrolled.find(e => e.key == payload.studentKey)) {
-          console.error('Student not enrolled in this class');
-          return false;
-        }
-
-        cls.enrolled = cls.enrolled.filter(e => e.key !== payload.studentKey);
-
-        await firebaseService.updateRecord('classes', cls.key, {
-          enrolled: cls.enrolled
-        });
-
-        if (cls.enrolled) {
-          cls.enrolled = cls.enrolled.filter(student => student.key !== payload.studentKey);
-        }
-
-        this.classes = this.classes.filter(c => !(c.key === payload.classKey && c.enrolled && !c.enrolled.find(e => e.key == payload.studentKey)));
-
         return true;
       } catch (error) {
-        console.error('Error unenrolling student:', error);
+        console.error('Error un-enrolling student:', error);
         return false;
       }
     }

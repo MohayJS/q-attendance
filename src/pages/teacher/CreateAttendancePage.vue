@@ -22,7 +22,7 @@ const existingMeetingFound = ref(false);
 const activeClass = computed(() => {
   if (typeof route.params?.classKey === 'string') {
     const classKey = route.params.classKey;
-    return (classStore.classes || []).find((c) => c.key === classKey);
+    return (classStore.teaching || []).find((c) => c.key === classKey);
   }
   return undefined;
 });
@@ -47,14 +47,13 @@ onMounted(async () => {
 
 const checkExistingMeeting = () => {
   if (!activeClass.value?.key) return false;
-  
+
   const dateTimeString = `${attendanceDate.value} ${attendanceTime.value}`;
-  
-  const existingMeeting = attendanceStore.meetings.find(meeting => 
-    meeting.classKey === activeClass.value?.key && 
-    meeting.date === dateTimeString
+
+  const existingMeeting = attendanceStore.meetings.find(
+    (meeting) => meeting.classKey === activeClass.value?.key && meeting.date === dateTimeString,
   );
-  
+
   existingMeetingFound.value = !!existingMeeting;
   return existingMeetingFound.value;
 };
@@ -66,7 +65,7 @@ const createAttendanceRecord = async () => {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
     return;
   }
@@ -77,7 +76,7 @@ const createAttendanceRecord = async () => {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
     return;
   }
@@ -86,14 +85,14 @@ const createAttendanceRecord = async () => {
 
   try {
     const dateTimeString = `${attendanceDate.value} ${attendanceTime.value}`;
-    
+
     const newMeeting: ClassMeetingModel = {
       key: uid(),
       classKey: activeClass.value.key,
       date: dateTimeString,
       status: attendanceStatus.value,
       teacher: currentTeacher.value.key,
-      checkIns: []
+      checkIns: [],
     };
 
     await attendanceStore.newClassMeeting(newMeeting);
@@ -103,12 +102,12 @@ const createAttendanceRecord = async () => {
       color: 'green',
       icon: 'check_circle',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
 
-    void router.push({ 
-      name: 'teacherClass', 
-      params: { classKey: activeClass.value.key } 
+    void router.push({
+      name: 'teacherClass',
+      params: { classKey: activeClass.value.key },
     });
   } catch (error) {
     console.error('Error creating attendance record:', error);
@@ -117,7 +116,7 @@ const createAttendanceRecord = async () => {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
   } finally {
     isSubmitting.value = false;
@@ -125,20 +124,22 @@ const createAttendanceRecord = async () => {
 };
 
 const cancelAndGoBack = () => {
-  void router.push({ 
-    name: 'teacherClass', 
-    params: { classKey: activeClass.value?.key || '' } 
+  void router.push({
+    name: 'teacherClass',
+    params: { classKey: activeClass.value?.key || '' },
   });
 };
 </script>
 
 <template>
-  <q-page style="margin: 2rem 1rem 2rem 1.5rem;">
+  <q-page style="margin: 2rem 1rem 2rem 1.5rem">
     <div>
       <q-card class="q-mb-md">
         <q-card-section>
           <div class="text-h6">Create Attendance Record</div>
-          <div v-if="activeClass" class="text-subtitle2">{{ activeClass.name }} - Section {{ activeClass.section }}</div>
+          <div v-if="activeClass" class="text-subtitle2">
+            {{ activeClass.name }} - Section {{ activeClass.section }}
+          </div>
         </q-card-section>
 
         <q-separator />
@@ -152,7 +153,7 @@ const cancelAndGoBack = () => {
                   v-model="attendanceDate"
                   label="Date"
                   mask="####/##/##"
-                  :rules="[val => !!val || 'Date is required']"
+                  :rules="[(val) => !!val || 'Date is required']"
                 >
                   <template v-slot:append>
                     <q-icon name="event" class="cursor-pointer">
@@ -174,7 +175,7 @@ const cancelAndGoBack = () => {
                   v-model="attendanceTime"
                   label="Time"
                   mask="##:##"
-                  :rules="[val => !!val || 'Time is required']"
+                  :rules="[(val) => !!val || 'Time is required']"
                 >
                   <template v-slot:append>
                     <q-icon name="access_time" class="cursor-pointer">
@@ -196,14 +197,14 @@ const cancelAndGoBack = () => {
                   v-model="attendanceStatus"
                   :options="[
                     { label: 'Open', value: 'open' },
-                    { label: 'Concluded', value: 'concluded' }
+                    { label: 'Concluded', value: 'concluded' },
                   ]"
                   option-value="value"
                   option-label="label"
                   label="Status"
                   emit-value
                   map-options
-                  :rules="[val => !!val || 'Status is required']"
+                  :rules="[(val) => !!val || 'Status is required']"
                 />
               </div>
             </div>
@@ -223,13 +224,7 @@ const cancelAndGoBack = () => {
             </div>
 
             <div class="row justify-end q-mt-md">
-              <q-btn
-                label="Cancel"
-                color="grey"
-                flat
-                class="q-mr-sm"
-                @click="cancelAndGoBack"
-              />
+              <q-btn label="Cancel" color="grey" flat class="q-mr-sm" @click="cancelAndGoBack" />
               <q-btn
                 type="submit"
                 label="Create Attendance Record"

@@ -7,11 +7,15 @@ import {
   signInWithEmailAndPassword, signInWithPopup, signOut, User
 } from "firebase/auth";
 import { getAuth } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocFromCache, getDocs, getFirestore, setDoc } from "firebase/firestore";
+import { addDoc, collection, CollectionReference, deleteDoc, doc, getDoc, getDocFromCache, getDocs, getFirestore, or, query, QueryFieldFilterConstraint, setDoc, where, WhereFilterOp } from "firebase/firestore";
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
-import { ClassModel } from 'src/models/class.models';
+import { Entity } from 'src/models/base.model';
+import { ClassKeepingModel, ClassModel } from 'src/models/class.models';
 import { UserModel } from 'src/models/user.models';
 
+function copyObject<T>(source: T) {
+  return JSON.parse(JSON.stringify(source)) as T;
+}
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -40,9 +44,15 @@ type CollectionTypes = {
   'teachers': UserModel;
   'enrolled': UserModel;
   meetings: ClassMeetingModel;
-  'check-ins': MeetingCheckInModel
+  'check-ins': MeetingCheckInModel,
+  'class-keepings': ClassKeepingModel
 }
+
 type CollectionName = keyof CollectionTypes;
+type WhereArgs = Parameters<typeof where>;
+type Operand = Partial<Record<WhereFilterOp, WhereArgs[2]>>;
+type WhereCondition<T extends Entity> = Partial<Record<keyof T, Operand>>;
+type Condition<T extends Entity> = WhereCondition<T>[] | WhereCondition<T>;
 
 class FirebaseService {
   /**
@@ -115,15 +125,15 @@ class FirebaseService {
     }
     try {
       if (!record.key) {
-        const docRef = await addDoc(collRef, {
+        const docRef = await addDoc(collRef, copyObject({
           ...record
-        });
+        }));
         record.key = docRef.id;
       } else {
         const docRef = doc(collRef, record.key);
-        await setDoc(docRef, {
+        await setDoc(docRef, copyObject({
           ...record
-        });
+        }));
       }
       return record;
     } catch (e) {
@@ -172,7 +182,7 @@ class FirebaseService {
   async updateRecord<C extends CollectionName>(collectionName: C, key: string, record: Partial<CollectionTypes[C]>, path?: string): Promise<boolean> {
     const docSnap = path ? doc(db, collectionName, path, key) : doc(db, collectionName, key);
     try {
-      await setDoc(docSnap, record, { merge: true });
+      await setDoc(docSnap, copyObject(record), { merge: true });
       return true;
     } catch (error) {
       console.error('failed to update record:', error);
@@ -196,14 +206,41 @@ class FirebaseService {
     }
     return false;
   }
-  async findRecords<C extends CollectionName>(collectionName: C, path?: string): Promise<CollectionTypes[C][]> {
+  getAndWhere<T extends Entity>(condition: WhereCondition<T>) {
+    const andCon: QueryFieldFilterConstraint[] = [];
+    for (const prop in condition) {
+      const con = condition[prop];
+      for (const op in con) {
+        const operator = op as WhereFilterOp;
+        const val = con?.[operator];
+        andCon.push(where(prop, operator, val));
+      }
+    }
+    return andCon;
+  }
+  getCollRef<C extends CollectionName>(collRef: CollectionReference, condition?: Condition<CollectionTypes[C]>) {
+    if (Array.isArray(condition)) {
+      const orCon: QueryFieldFilterConstraint[] = [];
+      for (const con of condition) {
+        orCon.push(...this.getAndWhere(con));
+      }
+      return query(collRef, or(...orCon));
+    } else if (condition) {
+      const andCon = this.getAndWhere(condition);
+      if (andCon.length) {
+        return query(collRef, ...andCon);
+      }
+    }
+    return collRef;
+  }
+  async findRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Condition<CollectionTypes[C]>): Promise<CollectionTypes[C][]> {
     let collRef = collection(db, collectionName);
     if (path) {
       const parts = path.split('/');
       const [colName] = parts.splice(1, 1);
       collRef = collection(db, colName!, [...parts, collectionName].join('/'));
     }
-    const snapshot = await getDocs(collRef);
+    const snapshot = await getDocs(this.getCollRef(collRef, condition));
     if (snapshot.empty) {
       return [];
     } else {
