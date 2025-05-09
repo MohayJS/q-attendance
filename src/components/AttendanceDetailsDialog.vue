@@ -25,14 +25,14 @@ const enrolledStudentIds = ref<string[]>([]);
 
 onMounted(async () => {
   if (props.meeting.classKey) {
-    const existingClass = classStore.classes.find(c => c.key === props.meeting.classKey);
+    const existingClass = classStore.classes.find((c) => c.key === props.meeting.classKey);
     if (!existingClass) {
       await classStore.loadClass(props.meeting.classKey);
     }
 
-    const classData = classStore.classes.find(c => c.key === props.meeting.classKey);
-    if (classData?.enrolledStudents) {
-      enrolledStudentIds.value = classData.enrolledStudents;
+    const classData = classStore.classes.find((c) => c.key === props.meeting.classKey);
+    if (classData?.enrolled) {
+      enrolledStudentIds.value = classData.enrolled.map((e) => e.key!);
     }
   }
 });
@@ -40,11 +40,11 @@ onMounted(async () => {
 const checkInsWithStudentNames = computed(() => {
   if (!props.meeting.checkIns) return [];
 
-  return props.meeting.checkIns.map(checkIn => {
-    const student = usersStore.users.find(user => user.key === checkIn.student);
+  return props.meeting.checkIns.map((checkIn) => {
+    const student = usersStore.users.find((user) => user.key === checkIn.student);
     return {
       ...checkIn,
-      studentName: student?.fullName || 'Unknown Student'
+      studentName: student?.fullName || 'Unknown Student',
     };
   });
 });
@@ -52,20 +52,21 @@ const checkInsWithStudentNames = computed(() => {
 const absentStudents = computed(() => {
   if (!props.meeting.checkIns || enrolledStudentIds.value.length === 0) return [];
 
-  const checkedInStudentIds = props.meeting.checkIns.map(checkIn => checkIn.student);
+  const checkedInStudentIds = props.meeting.checkIns.map((checkIn) => checkIn.student);
 
   return usersStore.users
-    .filter(user =>
-      enrolledStudentIds.value.includes(user.key || '') &&
-      !checkedInStudentIds.includes(user.key || '') &&
-      user.role === 'student'
+    .filter(
+      (user) =>
+        enrolledStudentIds.value.includes(user.key || '') &&
+        !checkedInStudentIds.includes(user.key || '') &&
+        user.role === 'student',
     )
-    .map(student => ({
+    .map((student) => ({
       key: '',
       student: student.key || '',
       studentName: student.fullName || 'Unknown Student',
       checkInTime: '-',
-      status: 'absent' as MeetingCheckInModel['status']
+      status: 'absent' as MeetingCheckInModel['status'],
     }));
 });
 
@@ -110,31 +111,31 @@ function getStatusLabel(status: MeetingCheckInModel['status']): string {
 function closeAttendanceSession() {
   Dialog.create({
     title: 'Close Attendance Session',
-    message: 'Are you sure you want to close this attendance session? This will mark all students who have not checked in as absent.',
+    message:
+      'Are you sure you want to close this attendance session? This will mark all students who have not checked in as absent.',
     persistent: true,
     ok: {
       label: 'Yes, Close Session',
-      color: 'primary'
+      color: 'primary',
     },
     cancel: {
       label: 'Cancel',
-      flat: true
-    }
+      flat: true,
+    },
   }).onOk(() => {
     try {
       isUpdating.value = true;
 
-
-      attendanceStore.concludeMeeting(props.meeting.key)
+      attendanceStore
+        .concludeMeeting(props.meeting.key)
         .then(() => {
           Notify.create({
             message: 'Attendance session closed successfully',
             color: 'green',
             icon: 'check_circle',
             position: 'top',
-            timeout: 3000
+            timeout: 3000,
           });
-
 
           emit('attendance-updated');
 
@@ -147,7 +148,7 @@ function closeAttendanceSession() {
             color: 'negative',
             icon: 'error',
             position: 'top',
-            timeout: 3000
+            timeout: 3000,
           });
         })
         .finally(() => {
@@ -167,24 +168,25 @@ function reopenAttendanceSession() {
     persistent: true,
     ok: {
       label: 'Yes, Re-open Session',
-      color: 'primary'
+      color: 'primary',
     },
     cancel: {
       label: 'Cancel',
-      flat: true
-    }
+      flat: true,
+    },
   }).onOk(() => {
     try {
       isUpdating.value = true;
 
-      attendanceStore.reopenMeeting(props.meeting.key)
+      attendanceStore
+        .reopenMeeting(props.meeting.key)
         .then(() => {
           Notify.create({
             message: 'Attendance session re-opened successfully',
             color: 'green',
             icon: 'check_circle',
             position: 'top',
-            timeout: 3000
+            timeout: 3000,
           });
 
           emit('attendance-updated');
@@ -198,7 +200,7 @@ function reopenAttendanceSession() {
             color: 'negative',
             icon: 'error',
             position: 'top',
-            timeout: 3000
+            timeout: 3000,
           });
         })
         .finally(() => {
@@ -213,7 +215,12 @@ function reopenAttendanceSession() {
 </script>
 
 <template>
-  <q-dialog :model-value="show" @update:model-value="emit('update:show', $event)" persistent maximized>
+  <q-dialog
+    :model-value="show"
+    @update:model-value="emit('update:show', $event)"
+    persistent
+    maximized
+  >
     <q-card>
       <q-card-section class="row items-center q-pb-none">
         <div class="text-h6">Attendance Details</div>
@@ -223,7 +230,11 @@ function reopenAttendanceSession() {
 
       <q-card-section>
         <div class="text-subtitle1">{{ formatDate(meeting.date) }}</div>
-        <q-badge :color="meeting.status === 'open' ? 'green' : meeting.status === 'cancelled' ? 'red' : 'blue'">
+        <q-badge
+          :color="
+            meeting.status === 'open' ? 'green' : meeting.status === 'cancelled' ? 'red' : 'blue'
+          "
+        >
           {{ meeting.status }}
         </q-badge>
       </q-card-section>
@@ -235,9 +246,7 @@ function reopenAttendanceSession() {
           <q-item v-for="checkIn in checkInsWithStudentNames" :key="checkIn.key" class="q-my-sm">
             <q-item-section>
               <q-item-label>{{ checkIn.studentName }}</q-item-label>
-              <q-item-label caption>
-                Check-in time: {{ checkIn.checkInTime }}
-              </q-item-label>
+              <q-item-label caption> Check-in time: {{ checkIn.checkInTime }} </q-item-label>
             </q-item-section>
 
             <q-item-section side>
@@ -250,21 +259,19 @@ function reopenAttendanceSession() {
           <q-item v-for="student in absentStudents" :key="student.student" class="q-my-sm">
             <q-item-section>
               <q-item-label>{{ student.studentName }}</q-item-label>
-              <q-item-label caption>
-                Not checked in
-              </q-item-label>
+              <q-item-label caption> Not checked in </q-item-label>
             </q-item-section>
 
             <q-item-section side>
-              <q-badge color="red">
-                Not Checked In
-              </q-badge>
+              <q-badge color="red"> Not Checked In </q-badge>
             </q-item-section>
           </q-item>
 
           <q-item v-if="checkInsWithStudentNames.length === 0 && absentStudents.length === 0">
             <q-item-section>
-              <q-item-label class="text-center text-grey">No attendance data available</q-item-label>
+              <q-item-label class="text-center text-grey"
+                >No attendance data available</q-item-label
+              >
             </q-item-section>
           </q-item>
         </q-list>

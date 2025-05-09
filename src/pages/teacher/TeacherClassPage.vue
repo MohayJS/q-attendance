@@ -40,43 +40,45 @@ const attendanceColumns: QTableColumn[] = [
     label: 'Date',
     align: 'left',
     field: 'date',
-    sortable: true
+    sortable: true,
   },
   {
     name: 'status',
     align: 'center',
     label: 'Status',
     field: 'status',
-    sortable: true
+    sortable: true,
   },
   {
     name: 'present',
     align: 'center',
     label: 'Present',
-    field: (row: ClassMeetingModel) => row.checkIns?.filter(c => c.status === 'present' || c.status === 'check-in').length || 0,
-    sortable: true
+    field: (row: ClassMeetingModel) =>
+      row.checkIns?.filter((c) => c.status === 'present' || c.status === 'check-in').length || 0,
+    sortable: true,
   },
   {
     name: 'late',
     align: 'center',
     label: 'Late',
-    field: (row: ClassMeetingModel) => row.checkIns?.filter(c => c.status === 'late').length || 0,
-    sortable: true
+    field: (row: ClassMeetingModel) => row.checkIns?.filter((c) => c.status === 'late').length || 0,
+    sortable: true,
   },
   {
     name: 'absent',
     align: 'center',
     label: 'Absent',
-    field: (row: ClassMeetingModel) => row.checkIns?.filter(c => c.status === 'absent').length || 0,
-    sortable: true
+    field: (row: ClassMeetingModel) =>
+      row.checkIns?.filter((c) => c.status === 'absent').length || 0,
+    sortable: true,
   },
   {
     name: 'actions',
     align: 'right',
     label: 'Actions',
     field: 'actions',
-    sortable: false
-  }
+    sortable: false,
+  },
 ];
 
 onMounted(async () => {
@@ -88,7 +90,7 @@ onMounted(async () => {
 });
 
 async function loadEnrolledStudents() {
-  if (!activeClass.value?.enrolledStudents?.length) {
+  if (!activeClass.value?.enrolled?.length) {
     enrolledStudents.value = [];
     return;
   }
@@ -97,8 +99,8 @@ async function loadEnrolledStudents() {
     await usersStore.loadUsers();
   }
 
-  enrolledStudents.value = usersStore.users.filter(user =>
-    activeClass.value?.enrolledStudents?.includes(user.key || '')
+  enrolledStudents.value = usersStore.users.filter((user) =>
+    activeClass.value?.enrolled?.find((e) => e.key == user.key || ''),
   );
 }
 
@@ -137,7 +139,7 @@ async function removeStudent(student: UserModel) {
   if (activeClass.value && student.key) {
     const result = await classStore.unenroll({
       classKey: activeClass.value.key || '',
-      studentKey: student.key
+      studentKey: student.key,
     });
 
     if (result) {
@@ -158,7 +160,7 @@ function startRollCall(meeting: ClassMeetingModel) {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
     return;
   }
@@ -167,8 +169,8 @@ function startRollCall(meeting: ClassMeetingModel) {
     name: 'rollCall',
     params: {
       classKey: route.params.classKey as string,
-      meetingKey: meeting.key
-    }
+      meetingKey: meeting.key,
+    },
   });
 }
 
@@ -180,12 +182,14 @@ async function handleAttendanceUpdated() {
 </script>
 
 <template>
-  <q-page style="margin: 2rem 1rem 2rem 1.5rem;">
+  <q-page style="margin: 2rem 1rem 2rem 1.5rem">
     <div class="class-dashboard q-mb-md" v-if="activeClass">
       <q-card>
         <q-card-section>
           <div class="text-h5">{{ activeClass.name }}</div>
-          <div class="text-subtitle2">Section: {{ activeClass.section }} | Academic Year: {{ activeClass.academicYear }}</div>
+          <div class="text-subtitle2">
+            Section: {{ activeClass.section }} | Academic Year: {{ activeClass.academicYear }}
+          </div>
           <div class="text-caption">Class Code: {{ activeClass.classCode }}</div>
         </q-card-section>
 
@@ -238,7 +242,13 @@ async function handleAttendanceUpdated() {
       <q-tab-panel name="students">
         <div class="q-mb-md flex justify-between items-center">
           <div class="text-h6">Enrolled Students</div>
-          <q-btn color="primary" disabled icon="person_add" label="Add Student" @click="enrollStudent" />
+          <q-btn
+            color="primary"
+            disabled
+            icon="person_add"
+            label="Add Student"
+            @click="enrollStudent"
+          />
         </div>
 
         <q-list bordered separator>
@@ -272,7 +282,12 @@ async function handleAttendanceUpdated() {
       <q-tab-panel name="attendance">
         <div class="q-mb-md flex justify-between items-center">
           <div class="text-h6">Attendance History</div>
-          <q-btn color="primary" icon="add" label="New Attendance" :to="{ name: 'createAttendance', params: { classKey: route.params?.classKey } }" />
+          <q-btn
+            color="primary"
+            icon="add"
+            label="New Attendance"
+            :to="{ name: 'createAttendance', params: { classKey: route.params?.classKey } }"
+          />
         </div>
 
         <q-table
@@ -284,7 +299,15 @@ async function handleAttendanceUpdated() {
         >
           <template v-slot:body-cell-status="props">
             <q-td :props="props">
-              <q-badge :color="props.row.status === 'open' ? 'green' : props.row.status === 'cancelled' ? 'red' : 'blue'">
+              <q-badge
+                :color="
+                  props.row.status === 'open'
+                    ? 'green'
+                    : props.row.status === 'cancelled'
+                      ? 'red'
+                      : 'blue'
+                "
+              >
                 {{ props.row.status }}
               </q-badge>
             </q-td>
@@ -303,7 +326,14 @@ async function handleAttendanceUpdated() {
                 >
                   <q-tooltip>Start Roll Call</q-tooltip>
                 </q-btn>
-                <q-btn v-else color="primary" icon="visibility" dense round @click="viewAttendanceDetails(props.row)">
+                <q-btn
+                  v-else
+                  color="primary"
+                  icon="visibility"
+                  dense
+                  round
+                  @click="viewAttendanceDetails(props.row)"
+                >
                   <q-tooltip>View Details</q-tooltip>
                 </q-btn>
               </div>
@@ -311,9 +341,7 @@ async function handleAttendanceUpdated() {
           </template>
         </q-table>
 
-        <div v-else class="text-center q-pa-lg text-grey">
-          No attendance records found
-        </div>
+        <div v-else class="text-center q-pa-lg text-grey">No attendance records found</div>
       </q-tab-panel>
     </q-tab-panels>
 
@@ -329,8 +357,8 @@ async function handleAttendanceUpdated() {
               v-model="studentName"
               label="Student Name"
               :rules="[
-                v => !!v || 'Name is required',
-                v => v.length >= 3 || 'Name must be at least 3 characters'
+                (v) => !!v || 'Name is required',
+                (v) => v.length >= 3 || 'Name must be at least 3 characters',
               ]"
             />
             <q-input
@@ -338,15 +366,23 @@ async function handleAttendanceUpdated() {
               label="Student Email"
               type="email"
               :rules="[
-                v => !!v || 'Email is required',
-                v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || 'Please enter a valid email'
+                (v) => !!v || 'Email is required',
+                (v) =>
+                  /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
+                  'Please enter a valid email',
               ]"
             />
           </q-card-section>
 
           <q-card-actions align="right">
             <q-btn flat label="Cancel" color="negative" v-close-popup />
-            <q-btn flat type="submit" label="Add" color="positive" :disable="!studentName || !studentEmail" />
+            <q-btn
+              flat
+              type="submit"
+              label="Add"
+              color="positive"
+              :disable="!studentName || !studentEmail"
+            />
           </q-card-actions>
         </q-form>
       </q-card>

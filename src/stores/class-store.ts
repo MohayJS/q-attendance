@@ -64,7 +64,7 @@ export const useClassStore = defineStore('Class', {
       class: ClassModel,
       student: UserModel
     }) {
-      const record = await firebaseService.createRecord('enrolled', payload.student, `/enrolled/${payload.class.key}`);
+      const record = await firebaseService.createRecord('enrolled', payload.student, `/classes/${payload.class.key}`);
       const cls = this.classes.find(c => c.key == payload.class.key);
       if (record && cls) {
         cls.enrolled = cls.enrolled || [];

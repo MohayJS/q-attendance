@@ -28,7 +28,7 @@ onMounted(async () => {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
     void router.push({ name: 'teacherClass', params: { classKey } });
     return;
@@ -43,7 +43,7 @@ onMounted(async () => {
 
 async function loadMeetingData(meetingKey: string, classKey: string) {
   const meetings = await attendanceStore.loadClassMeetings(classKey);
-  const foundMeeting = meetings.find(m => m.key === meetingKey);
+  const foundMeeting = meetings.find((m) => m.key === meetingKey);
 
   if (!foundMeeting) {
     Notify.create({
@@ -51,7 +51,7 @@ async function loadMeetingData(meetingKey: string, classKey: string) {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
     void router.push({ name: 'teacherClass', params: { classKey } });
     return;
@@ -65,20 +65,20 @@ async function loadMeetingData(meetingKey: string, classKey: string) {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
     void router.push({ name: 'teacherClass', params: { classKey } });
   }
 }
 
 async function loadEnrolledStudents(classKey: string) {
-  if (!classStore.classes.some(c => c.key === classKey)) {
+  if (!classStore.classes.some((c) => c.key === classKey)) {
     await classStore.loadClass(classKey);
   }
 
-  const activeClass = classStore.classes.find(c => c.key === classKey);
+  const activeClass = classStore.classes.find((c) => c.key === classKey);
 
-  if (!activeClass?.enrolledStudents?.length) {
+  if (!activeClass?.enrolled?.length) {
     enrolledStudents.value = [];
     return;
   }
@@ -87,8 +87,8 @@ async function loadEnrolledStudents(classKey: string) {
     await usersStore.loadUsers();
   }
 
-  enrolledStudents.value = usersStore.users.filter(user =>
-    activeClass.enrolledStudents?.includes(user.key || '')
+  enrolledStudents.value = usersStore.users.filter((user) =>
+    activeClass.enrolled?.find((e) => e.key == user.key || ''),
   );
 }
 const initializeSelectedStatuses = () => {
@@ -96,14 +96,14 @@ const initializeSelectedStatuses = () => {
 
   const statusMap: Record<string, MeetingCheckInModel['status']> = {};
 
-  enrolledStudents.value.forEach(student => {
+  enrolledStudents.value.forEach((student) => {
     if (student.key) {
       statusMap[student.key] = 'absent';
     }
   });
 
   if (meeting.value.checkIns) {
-    meeting.value.checkIns.forEach(checkIn => {
+    meeting.value.checkIns.forEach((checkIn) => {
       statusMap[checkIn.student] = checkIn.status;
     });
   }
@@ -113,9 +113,9 @@ const initializeSelectedStatuses = () => {
 const studentsWithStatus = computed(() => {
   if (!meeting.value) return [];
 
-  return enrolledStudents.value.map(student => {
+  return enrolledStudents.value.map((student) => {
     const studentKey = student.key || '';
-    const checkIn = meeting.value?.checkIns?.find(c => c.student === studentKey);
+    const checkIn = meeting.value?.checkIns?.find((c) => c.student === studentKey);
 
     return {
       key: studentKey,
@@ -123,7 +123,7 @@ const studentsWithStatus = computed(() => {
       email: student.email || '',
       status: selectedStatuses.value[studentKey] || 'absent',
       checkInTime: checkIn?.checkInTime || '-',
-      checkInKey: checkIn?.key || ''
+      checkInKey: checkIn?.key || '',
     };
   });
 });
@@ -145,24 +145,24 @@ async function saveRollCall(isSubmit: boolean = false) {
       persistent: true,
       ok: {
         label: 'Yes, Submit',
-        color: 'primary'
+        color: 'primary',
       },
       cancel: {
         label: 'Cancel',
-        flat: true
-      }
+        flat: true,
+      },
     }).onOk(() => {
       isSubmitting.value = true;
 
-      const updatePromises = studentsWithStatus.value.map(student => {
+      const updatePromises = studentsWithStatus.value.map((student) => {
         const status = selectedStatuses.value[student.key];
-        if (!status) return Promise.resolve(); 
+        if (!status) return Promise.resolve();
 
         return attendanceStore.updateCheckInStatus({
           meetingKey: meeting.value?.key || '',
           checkInKey: student.checkInKey,
           student: student.key,
-          status: status
+          status: status,
         });
       });
 
@@ -173,7 +173,7 @@ async function saveRollCall(isSubmit: boolean = false) {
             color: 'green',
             icon: 'check_circle',
             position: 'top',
-            timeout: 3000
+            timeout: 3000,
           });
 
           await attendanceStore.concludeMeeting(meeting.value?.key || '');
@@ -181,8 +181,8 @@ async function saveRollCall(isSubmit: boolean = false) {
           void router.push({
             name: 'teacherClass',
             params: {
-              classKey: route.params.classKey as string
-            }
+              classKey: route.params.classKey as string,
+            },
           });
         })
         .catch((error) => {
@@ -192,45 +192,42 @@ async function saveRollCall(isSubmit: boolean = false) {
             color: 'negative',
             icon: 'error',
             position: 'top',
-            timeout: 3000
+            timeout: 3000,
           });
-        })
+        });
     });
   } else {
     try {
       isSubmitting.value = true;
 
-      const updatePromises = studentsWithStatus.value.map(student => {
+      const updatePromises = studentsWithStatus.value.map((student) => {
         const status = selectedStatuses.value[student.key];
-        if (!status) return Promise.resolve(); 
+        if (!status) return Promise.resolve();
 
         return attendanceStore.updateCheckInStatus({
           meetingKey: meeting.value?.key || '',
           checkInKey: student.checkInKey,
           student: student.key,
-          status: status
+          status: status,
         });
       });
 
-      await Promise.all(updatePromises)
-        .then(() => {
+      await Promise.all(updatePromises).then(() => {
+        Notify.create({
+          message: 'Roll call saved',
+          color: 'green',
+          icon: 'check_circle',
+          position: 'top',
+          timeout: 3000,
+        });
 
-
-          Notify.create({
-            message: 'Roll call saved',
-            color: 'green',
-            icon: 'check_circle',
-            position: 'top',
-            timeout: 3000
-          });
-
-          void router.push({
-            name: 'teacherClass',
-            params: {
-              classKey: route.params.classKey as string
-            }
-          });
-        })
+        void router.push({
+          name: 'teacherClass',
+          params: {
+            classKey: route.params.classKey as string,
+          },
+        });
+      });
     } catch (error) {
       console.error('Error submitting roll call:', error);
       Notify.create({
@@ -238,9 +235,9 @@ async function saveRollCall(isSubmit: boolean = false) {
         color: 'negative',
         icon: 'error',
         position: 'top',
-        timeout: 3000
+        timeout: 3000,
       });
-    } 
+    }
   }
   isSubmitting.value = false;
 }
@@ -248,8 +245,8 @@ function cancelRollCall() {
   void router.push({
     name: 'teacherClass',
     params: {
-      classKey: route.params.classKey as string
-    }
+      classKey: route.params.classKey as string,
+    },
   });
 }
 </script>
@@ -261,7 +258,11 @@ function cancelRollCall() {
         <q-card-section class="bg-primary text-white">
           <div class="text-h6">Roll Call</div>
           <div class="text-subtitle1">{{ formatDate(meeting.date) }}</div>
-          <q-badge :color="meeting.status === 'open' ? 'green' : meeting.status === 'cancelled' ? 'red' : 'blue'">
+          <q-badge
+            :color="
+              meeting.status === 'open' ? 'green' : meeting.status === 'cancelled' ? 'red' : 'blue'
+            "
+          >
             {{ meeting.status }}
           </q-badge>
         </q-card-section>
@@ -274,7 +275,7 @@ function cancelRollCall() {
             :columns="[
               { name: 'name', label: 'Student Name', field: 'name', align: 'left', sortable: true },
               { name: 'checkInTime', label: 'Check-in Time', field: 'checkInTime', align: 'left' },
-              { name: 'status', label: 'Status', field: 'status', align: 'center' }
+              { name: 'status', label: 'Status', field: 'status', align: 'center' },
             ]"
             row-key="key"
             :pagination="{ rowsPerPage: 0 }"
@@ -287,7 +288,7 @@ function cancelRollCall() {
                   :options="[
                     { label: 'Present', value: 'present', color: 'green' },
                     { label: 'Late', value: 'late', color: 'orange' },
-                    { label: 'Absent', value: 'absent', color: 'red' }
+                    { label: 'Absent', value: 'absent', color: 'red' },
                   ]"
                   @update:model-value="updateStudentStatus(props.row.key, $event)"
                 />
@@ -297,18 +298,8 @@ function cancelRollCall() {
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn
-            color="negative"
-            label="Cancel"
-            :disable="isSubmitting"
-            @click="cancelRollCall"
-          />
-          <q-btn
-            color="orange"
-            label="Save"
-            :loading="isSubmitting"
-            @click="saveRollCall(false)"
-          />
+          <q-btn color="negative" label="Cancel" :disable="isSubmitting" @click="cancelRollCall" />
+          <q-btn color="orange" label="Save" :loading="isSubmitting" @click="saveRollCall(false)" />
           <q-btn
             color="primary"
             label="Submit Roll Call"

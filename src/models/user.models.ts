@@ -5,5 +5,5 @@ export interface UserModel {
   emailVerified?: boolean;
   avatar?: string;
   status?: 'active' | 'inactive' | 'pending';
-  role?: 'teacher' | 'admin' | 'supervisor' | 'student'
+  role?: 'teacher' | 'admin' | 'supervisor' | 'student' | undefined
 }

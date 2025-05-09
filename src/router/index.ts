@@ -46,7 +46,6 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     }
   });
 
-  const authStore = useAuthStore();
 
   const showNotif = () => {
     Notify.create({
@@ -61,21 +60,21 @@ export default defineRouter(function (/* { store, ssrContext } */) {
 
   Router.beforeEach(async (to, from, next) => {
     const user = await authStore.authorizeUser()
-    if (to.meta?.anonymous && user) {
+    if (to.meta?.anonymous && user && to.name != 'home') {
       showNotif()
       next({ name: 'home' })
-    // } if (to.meta?.admin && user?.role !== 'admin') {
-    //   showNotif()
-    //   next({ name: 'home' })
-    } else if (to.meta?.supervisor && user?.role !== 'supervisor') {
+      // } if (to.meta?.admin && user?.role !== 'admin') {
+      //   showNotif()
+      //   next({ name: 'home' })
+    } else if (to.meta?.supervisor && user?.role !== 'supervisor' && to.name != 'home') {
       showNotif()
       next({ name: 'home' })
-    // } else if (to.meta?.teacher && user?.role !== 'teacher') {
-    //   showNotif()
-    //   next({ name: 'home' })
-    // } else if (to.meta?.student && user?.role !== 'student') {
-    //   showNotif()
-    //   next({ name: 'home' })
+      // } else if (to.meta?.teacher && user?.role !== 'teacher') {
+      //   showNotif()
+      //   next({ name: 'home' })
+      // } else if (to.meta?.student && user?.role !== 'student') {
+      //   showNotif()
+      //   next({ name: 'home' })
     } else {
       next();
     }

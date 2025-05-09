@@ -65,7 +65,7 @@ async function enrollInClass() {
 
     if (
       authStore.currentAccount?.key &&
-      foundClass.enrolledStudents?.includes(authStore.currentAccount.key)
+      foundClass.enrolled?.find((e) => e.key == authStore.currentAccount?.key)
     ) {
       codeError.value = 'You are already enrolled in this class.';
       isLoading.value = false;
