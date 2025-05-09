@@ -43,8 +43,9 @@ export const useAuthStore = defineStore('auth', {
           email: user.email || '',
           emailVerified: !!user.emailVerified,
           fullName: user.displayName || displayName,
-          role: role as 'teacher' | 'admin' | 'supervisor' | 'student',
-          status: 'active'
+          role: role as UserModel['role'],
+          status: 'active',
+
         }
         const userKey = this.currentAccount.key || '';
         const userData = await firebaseService.getRecord('users', userKey);
@@ -60,16 +61,16 @@ export const useAuthStore = defineStore('auth', {
     },
     async updateRole(role: 'student' | 'teacher' | 'supervisor' | 'admin', key: string) {
       await firebaseService.updateRecord('users', key, { role })
-      .then(() => {
-        Notify.create({
-          message: 'Role updated',
-          color: 'green',
-          icon: 'check_circle',
-          position: 'top',
-          timeout: 3000,
-          progress: true
-        });
-      })
+        .then(() => {
+          Notify.create({
+            message: 'Role updated',
+            color: 'green',
+            icon: 'check_circle',
+            position: 'top',
+            timeout: 3000,
+            progress: true
+          });
+        })
     },
     async updateStatus(status: 'active' | 'inactive' | 'pending', key: string) {
       await firebaseService.updateRecord('users', key, { status })

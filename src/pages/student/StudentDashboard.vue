@@ -63,7 +63,10 @@ async function enrollInClass() {
       return;
     }
 
-    if (authStore.currentAccount?.key && foundClass.enrolledStudents?.includes(authStore.currentAccount.key)) {
+    if (
+      authStore.currentAccount?.key &&
+      foundClass.enrolledStudents?.includes(authStore.currentAccount.key)
+    ) {
       codeError.value = 'You are already enrolled in this class.';
       isLoading.value = false;
       return;
@@ -72,7 +75,7 @@ async function enrollInClass() {
     if (authStore.currentAccount) {
       await classStore.enroll({
         class: foundClass,
-        student: authStore.currentAccount
+        student: authStore.currentAccount,
       });
 
       Notify.create({
@@ -80,7 +83,7 @@ async function enrollInClass() {
         color: 'green',
         icon: 'check_circle',
         position: 'top',
-        timeout: 3000
+        timeout: 3000,
       });
 
       await loadStudentClasses();
@@ -114,20 +117,23 @@ async function unenrollCourse(cls: ClassModel) {
         ok: {
           label: 'Confirm',
           color: 'negative',
-          unelevated: true
+          unelevated: true,
         },
         cancel: {
           label: 'Cancel',
           color: 'grey',
-          flat: true
-        }
-      }).onOk(() => {
-        resolve();
-      }).onCancel(() => {
-        reject(new Error('Cancelled'));
-      }).onDismiss(() => {
-        reject(new Error('Dismissed'));
-      });
+          flat: true,
+        },
+      })
+        .onOk(() => {
+          resolve();
+        })
+        .onCancel(() => {
+          reject(new Error('Cancelled'));
+        })
+        .onDismiss(() => {
+          reject(new Error('Dismissed'));
+        });
     });
   } catch {
     return;
@@ -136,7 +142,7 @@ async function unenrollCourse(cls: ClassModel) {
   try {
     const success = await classStore.unenroll({
       classKey: cls.key,
-      studentKey: authStore.currentAccount.key
+      studentKey: authStore.currentAccount.key,
     });
 
     if (success) {
@@ -145,7 +151,7 @@ async function unenrollCourse(cls: ClassModel) {
         color: 'green',
         icon: 'check_circle',
         position: 'top',
-        timeout: 3000
+        timeout: 3000,
       });
 
       await loadStudentClasses();
@@ -155,7 +161,7 @@ async function unenrollCourse(cls: ClassModel) {
         color: 'negative',
         icon: 'error',
         position: 'top',
-        timeout: 3000
+        timeout: 3000,
       });
     }
   } catch (error) {
@@ -165,7 +171,7 @@ async function unenrollCourse(cls: ClassModel) {
       color: 'negative',
       icon: 'error',
       position: 'top',
-      timeout: 3000
+      timeout: 3000,
     });
   }
 }
@@ -238,8 +244,8 @@ async function unenrollCourse(cls: ClassModel) {
             :error="!!codeError"
             :error-message="codeError"
             :rules="[
-              v => !!v || 'Class code is required',
-              v => v.length >= 4 || 'Code must be at least 4 characters'
+              (v) => !!v || 'Class code is required',
+              (v) => v.length >= 4 || 'Code must be at least 4 characters',
             ]"
             @keyup.enter="enrollInClass"
           />

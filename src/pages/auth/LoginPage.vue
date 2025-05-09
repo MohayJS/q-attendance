@@ -71,7 +71,6 @@ async function registerWithGoogle(role: string) {
       </div>
     </q-card>
 
-
     <div>
       <router-view />
     </div>
@@ -101,16 +100,15 @@ async function registerWithGoogle(role: string) {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200vh; 
+  height: 200vh;
   background-color: #f8f4e1;
   flex-direction: column;
 }
-.msupic{
+.msupic {
   display: block;
   margin: 0 auto;
-
 }
-.signin-text{
+.signin-text {
   color: grey;
   font-size: 15px;
   display: block;

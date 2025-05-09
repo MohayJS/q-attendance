@@ -6,7 +6,7 @@ export function useLogout() {
   const $q = useQuasar();
   const router = useRouter();
   const authStore = useAuthStore();
-  
+
   const logout = () => {
     $q.notify({
       message: 'Are you sure',
@@ -20,6 +20,6 @@ export function useLogout() {
       ]
     });
   };
-  
+
   return { logout };
 }

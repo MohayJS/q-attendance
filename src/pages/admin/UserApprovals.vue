@@ -35,7 +35,7 @@ const columns: QTableColumn[] = [
   },
 ];
 
-const rows = computed(() => userStore.users.filter(user => user.status === 'pending'));
+const rows = computed(() => userStore.users.filter((user) => user.status === 'pending'));
 
 onMounted(async () => {
   await userStore.loadUsers();
@@ -47,7 +47,7 @@ const approveItem = async (key: string) => {
 };
 
 const deleteItem = async (key: string) => {
-  await authStore.updateStatus('inactive', key)
+  await authStore.updateStatus('inactive', key);
   await userStore.loadUsers();
 };
 </script>

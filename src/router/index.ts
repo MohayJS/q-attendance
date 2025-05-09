@@ -32,6 +32,19 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
+  const authStore = useAuthStore();
+  Router.beforeEach(async (to, from, next) => {
+    const user = await authStore.authorizeUser()
+    if (!user && to.name != 'login') {
+      next({ name: 'login' })
+    } else if (user && to.name == 'login') {
+      next({ name: 'home' })
+    } else if (to.meta?.admin && user?.role !== 'admin') {
+      next({ name: 'login' })
+    } else {
+      next();
+    }
+  });
 
   const authStore = useAuthStore();
 

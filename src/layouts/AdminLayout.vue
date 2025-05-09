@@ -63,7 +63,9 @@ function toggleUserManagement() {
 
         <q-btn round>
           <q-avatar>
-            <img :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'" />
+            <img
+              :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
+            />
           </q-avatar>
           <q-menu>
             <q-btn color="primary" label="Logout" @click="signOff" />

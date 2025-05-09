@@ -222,6 +222,14 @@ export const useAttendanceStore = defineStore('attendance', {
         console.error('Error reopening meeting:', error);
         throw error;
       }
+      // }) {
+
+      //   await firebaseService.createRecord('check-ins', {
+      //     checkInTime: date.formatDate(new Date(), 'HH:mm:ss'),
+      //     key: '',
+      //     status: payload.status || 'check-in',
+      //     student: payload.student
+      //   }, `meetings/${payload.meeting.key}/checkIns`);
     },
   },
 });

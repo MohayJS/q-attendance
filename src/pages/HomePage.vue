@@ -12,17 +12,16 @@ onMounted(async () => {
 const router = useRouter();
 
 const signinbutton = () => {
-  void router.push('/auth/login')
+  void router.push('/auth/login');
 };
 
 const signupbutton = () => {
-  void router.push('/auth/register')
+  void router.push('/auth/register');
 };
 
 const gotoDashboard = () => {
-  void router.push(`${authStore.currentAccount?.role}`)
-}
-
+  void router.push(`${authStore.currentAccount?.role}`);
+};
 </script>
 
 <template>
@@ -39,8 +38,6 @@ const gotoDashboard = () => {
         </div>
       </div>
     </div>
-
-
   </q-page>
 </template>
 

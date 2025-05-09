@@ -3,6 +3,7 @@ import type { RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
+    name: 'home',
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { name: 'home', path: '', component: () => import('pages/HomePage.vue') },
@@ -49,7 +50,7 @@ const routes: RouteRecordRaw[] = [
       { name: 'admin', path: '', component: () => import('pages/admin/DashboardPage.vue'), meta: { admin: true } },
       { name: 'user-approvals', path: 'user-approvals', component: () => import('pages/admin/UserApprovals.vue'), meta: { admin: true } },
       { name: 'users', path: 'users', component: () => import('pages/admin/UsersPage.vue'), meta: { admin: true } },
-      { name: 'role-management' , path: 'role-management', component: () => import('pages/admin/RoleManagement.vue'), meta: { admin: true } },
+      { name: 'role-management', path: 'role-management', component: () => import('pages/admin/RoleManagement.vue'), meta: { admin: true } },
     ]
   },
 
