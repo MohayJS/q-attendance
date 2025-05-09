@@ -1,21 +1,31 @@
 <script setup lang="ts">
 import type { QTableColumn } from 'quasar'; // Changed to import type
 import { UserModel } from 'src/models/user.models';
+import { useAuthStore } from 'src/stores/auth-store';
 import { useUsersStore } from 'src/stores/user-store';
 import { computed, onMounted } from 'vue';
 
+const userStore = useUsersStore();
+const authStore = useAuthStore();
+
 const columns: QTableColumn[] = [
   {
-    name: 'username',
+    name: 'name',
     required: true,
-    label: 'Email',
+    label: 'Name',
     align: 'left',
-    field: (row: UserModel) => row.email,
+    field: (row: UserModel) => row.fullName,
     format: (val: string) => `${val}`,
     sortable: true,
   },
+  {
+    name: 'email',
+    align: 'left',
+    label: 'Email',
+    field: 'email',
+    sortable: true,
+  },
   { name: 'role', align: 'center', label: 'Role', field: 'role', sortable: true },
-  { name: 'time', label: 'Time', field: 'time', sortable: true },
   {
     name: 'actions',
     label: 'Actions',
@@ -24,27 +34,21 @@ const columns: QTableColumn[] = [
     sortable: false,
   },
 ];
-const userStore = useUsersStore();
 
-const rows = computed(() => userStore.users);
+const rows = computed(() => userStore.users.filter((user) => user.status === 'pending'));
 
 onMounted(async () => {
   await userStore.loadUsers();
 });
 
-const approveItem = (row: UserModel) => {
-  const index = rows.value.findIndex((r) => r.email === row.email);
-  if (index !== -1) {
-    rows.value[index]!.status = 'active';
-  }
-  console.log(rows.value[index]?.status);
+const approveItem = async (key: string) => {
+  await authStore.updateStatus('active', key);
+  await userStore.loadUsers();
 };
 
-const deleteItem = (row: UserModel) => {
-  const index = rows.value.findIndex((r) => r.email === row.email);
-  if (index !== -1) {
-    rows.value.splice(index, 1);
-  }
+const deleteItem = async (key: string) => {
+  await authStore.updateStatus('inactive', key);
+  await userStore.loadUsers();
 };
 </script>
 
@@ -59,12 +63,12 @@ const deleteItem = (row: UserModel) => {
             icon="check"
             dense
             round
-            @click="approveItem(props.row)"
+            @click="approveItem(props.row.key)"
           >
             <q-tooltip>Approve</q-tooltip>
           </q-btn>
-          <q-btn color="red" icon="delete" dense round @click="deleteItem(props.row)">
-            <q-tooltip>Delete</q-tooltip>
+          <q-btn color="red" icon="close" dense round @click="deleteItem(props.row.key)">
+            <q-tooltip>Reject</q-tooltip>
           </q-btn>
         </q-td>
       </template>

@@ -8,30 +8,27 @@ const router = useRouter();
 
 const username = ref('');
 const password = ref('');
-const showTable = ref(false);
-
-interface Accounts {
-  username: string;
-  password: string;
-  role: string;
-  status: string;
-}
-
-const accounts = ref<Accounts[]>([]);
+const askRole = ref(false);
 
 async function onSubmit() {
   const auth = await authStore.login(username.value, password.value);
   if (auth) {
-    await router.replace('/');
+    await router.replace({ name: `${authStore.currentAccount?.role}` });
   }
 }
 async function continueWithGoogle() {
-  await authStore.loginWithGoogle();
-  await router.replace({ name: 'home' });
+  const user = await authStore.loginWithGoogle();
+
+  if (user) {
+    askRole.value = true;
+  } else {
+    const user = await authStore.authorizeUser();
+    await router.replace({ name: `${user?.role}` });
+  }
 }
-function showAccounts() {
-  accounts.value = [];
-  showTable.value = !showTable.value;
+async function registerWithGoogle(role: string) {
+  await authStore.authorizeUser('', role);
+  await router.replace({ name: `${authStore.currentAccount?.role}` });
 }
 </script>
 
@@ -42,7 +39,7 @@ function showAccounts() {
       class="my-card text-white q-ma-xl"
       style="background: radial-gradient(circle, #efeeea 0%, #f8f4e1 100%)"
     >
-      <q-card-section>
+      <q-card-section v-if="!askRole">
         <img class="msupic" src="/src/assets/msulogo2.png" height="80px" width="80px" />
         <h4 class="signin-text">Please sign-in your account if mayron</h4>
         <q-form @submit="onSubmit">
@@ -65,49 +62,15 @@ function showAccounts() {
           <q-btn class="login-button" @click="continueWithGoogle()">Continue with Google</q-btn>
         </q-card-actions>
       </q-card-section>
+      <div v-else>
+        Select your role
+        <q-btn @click="registerWithGoogle('student')">student</q-btn>
+        <q-btn @click="registerWithGoogle('teacher')">teacher</q-btn>
+        <q-btn @click="registerWithGoogle('supervisor')">supervisor</q-btn>
+        <q-btn @click="registerWithGoogle('admin')">admin</q-btn>
+      </div>
     </q-card>
 
-    <div class="flex">
-      <q-btn
-        class="buttontable"
-        :label="showTable ? 'Hide Existing Accounts' : 'Show Existing Accounts'"
-        color="primary"
-        @click="showAccounts"
-      />
-      <p>Number of Accounts: {{ accounts.length }}</p>
-    </div>
-    <div class="tableacc" v-if="showTable">
-      <q-markup-table flat bordered class="table-auto">
-        <thead>
-          <tr>
-            <th class="text-left">Username</th>
-            <th class="text-left">Password</th>
-            <th class="text-left">Role</th>
-            <th class="text-left">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="acc in accounts" :key="acc.username">
-            <td>{{ acc.username }}</td>
-            <td>{{ acc.password }}</td>
-            <td>{{ acc.role }}</td>
-            <td>
-              <q-badge
-                :color="
-                  acc.status === 'active'
-                    ? 'positive'
-                    : acc.status === 'inactive'
-                      ? 'negative'
-                      : 'warning'
-                "
-              >
-                {{ acc.status }}
-              </q-badge>
-            </td>
-          </tr>
-        </tbody>
-      </q-markup-table>
-    </div>
     <div>
       <router-view />
     </div>
@@ -115,7 +78,7 @@ function showAccounts() {
 </template>
 <style scoped>
 .top-border {
-  border-top: 5px solid #800000; /* blue border */
+  border-top: 5px solid #800000;
   width: 100%;
   font-weight: bolder;
   text-align: center;
@@ -137,8 +100,8 @@ function showAccounts() {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200vh; /* full screen height */
-  background-color: #f8f4e1; /* optional background */
+  height: 200vh;
+  background-color: #f8f4e1;
   flex-direction: column;
 }
 .msupic {

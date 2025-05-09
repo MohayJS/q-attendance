@@ -30,13 +30,11 @@ import EssentialLink, { type EssentialLinkProps } from 'components/EssentialLink
 const linksList: EssentialLinkProps[] = [
   {
     title: 'Home',
-    caption: 'Home',
     icon: 'home',
     link: '/',
   },
   {
     title: 'Classes',
-    caption: 'Classes',
     icon: 'school',
     link: '/class',
   },

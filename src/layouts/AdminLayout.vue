@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { logout } from 'src/utils/redirect';
 import EssentialLink, { type EssentialLinkProps } from 'src/components/EssentialLink.vue';
+import { useLogout } from 'src/utils/redirect';
+import { useAuthStore } from 'src/stores/auth-store';
+
+const { logout } = useLogout();
+const authStore = useAuthStore();
 
 const drawer = ref(false);
 const miniState = ref(false);
-const userManagementExpanded = ref(false);
+const userManagementExpanded = ref(true);
 
 const linksList: EssentialLinkProps[] = [
   {
@@ -20,6 +24,11 @@ const userManagementLinks: EssentialLinkProps[] = [
     title: 'Users',
     icon: 'people',
     link: '/admin/users',
+  },
+  {
+    title: 'Role Management',
+    icon: 'admin_panel_settings',
+    link: '/admin/role-management',
   },
   {
     title: 'User Approvals',
@@ -54,7 +63,9 @@ function toggleUserManagement() {
 
         <q-btn round>
           <q-avatar>
-            <img src="https://cdn.quasar.dev/img/avatar.png" />
+            <img
+              :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
+            />
           </q-avatar>
           <q-menu>
             <q-btn color="primary" label="Logout" @click="signOff" />

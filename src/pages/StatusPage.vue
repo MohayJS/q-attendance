@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useAuthStore } from 'src/stores/auth-store';
-import { logout } from 'src/utils/redirect';
+import { useLogout } from 'src/utils/redirect';
 import { computed } from 'vue';
+
+const { logout } = useLogout();
 const authStore = useAuthStore();
 const account = computed(() => authStore.currentAccount);
 const statusConfig = computed(() => {

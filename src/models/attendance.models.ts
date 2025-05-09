@@ -10,7 +10,7 @@ export interface MeetingCheckInModel {
   key: string;
   student: string;
   checkInTime: string;
-  status: 'check-in' | 'absent' | 'tardy' | 'present';
+  status: 'check-in' | 'absent' | 'late' | 'present';
   markedInTime?: string;
   comments?: string;
 }

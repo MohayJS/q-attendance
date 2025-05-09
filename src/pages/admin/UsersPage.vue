@@ -1,136 +1,124 @@
 <script setup lang="ts">
 import type { QTableColumn } from 'quasar'; // Changed to import type
-import { ref } from 'vue';
+import { UserModel } from 'src/models/user.models';
+import { useAuthStore } from 'src/stores/auth-store';
+import { useUsersStore } from 'src/stores/user-store';
+import { computed, onMounted, ref } from 'vue';
 
-interface Accounts {
-  username: string;
-  role: string;
-  status: 'pending' | 'active' | 'inactive';
-}
+const userStore = useUsersStore();
+const authStore = useAuthStore();
 
 const rowsPerPage = ref([10]);
 const columns: QTableColumn[] = [
-  { 
-    name: 'username',
+  {
+    name: 'fullName',
     required: true,
-    label: 'Username',
+    label: 'Name',
     align: 'left',
-    field: (row: Accounts) => row.username,
+    field: (row: UserModel) => row.fullName,
     format: (val: string) => `${val}`,
     sortable: true
   },
+  { name: 'email', align: 'left', label: 'Email', field: 'email', sortable: true },
   { name: 'role', align: 'center', label: 'Role', field: 'role', sortable: true },
-  { name: 'status', label: 'Status', field: 'status', sortable: true },
-  {
-    name: 'actions',
-    label: 'Actions',
-    align: 'center',
-    field: '',
-    sortable: false
-  }
+  { name: 'status', label: 'Status', field: 'status', sortable: true }
 ];
 
-const rows = ref([
-  { username: 'monkey_d_luffy', role: "student", status: 'active' },
-  { username: 'roronoa_zoro', role: "student", status: 'active' },
-  { username: 'nami', role: "teacher", status: 'pending' },
-  { username: 'usopp', role: "student", status: 'active' },
-  { username: 'sanji', role: "supervisor", status: 'pending' },
-  { username: 'tony_chopper', role: "student", status: 'active' },
-  { username: 'nico_robin', role: "teacher", status: 'active' },
-  { username: 'franky', role: "teacher", status: 'inactive' },
-  { username: 'brook', role: "student", status: 'active' },
-  { username: 'jinbe', role: "supervisor", status: 'active' },
-  { username: 'sakazuki', role: "admin", status: 'active' },
-  { username: 'kuzan', role: "admin", status: 'inactive' },
-  { username: 'borsalino', role: "admin", status: 'active' },
-  { username: 'smoker', role: "supervisor", status: 'active' },
-  { username: 'tashigi', role: "teacher", status: 'pending' },
-  { username: 'kaido', role: "admin", status: 'inactive' },
-  { username: 'big_mom', role: "admin", status: 'active' },
-  { username: 'shanks', role: "admin", status: 'active' },
-  { username: 'blackbeard', role: "admin", status: 'active' },
-  { username: 'mihawk', role: "supervisor", status: 'active' },
-  { username: 'boa_hancock', role: "supervisor", status: 'pending' },
-  { username: 'buggy', role: "teacher", status: 'inactive' },
-  { username: 'crocodile', role: "teacher", status: 'inactive' },
-  { username: 'doflamingo', role: "teacher", status: 'inactive' },
-  { username: 'law', role: "supervisor", status: 'active' },
-  { username: 'kid', role: "teacher", status: 'pending' },
-  { username: 'sabo', role: "supervisor", status: 'active' },
-  { username: 'dragon', role: "admin", status: 'active' },
-  { username: 'ivankov', role: "teacher", status: 'pending' }
-]);
+const rows = computed(() => userStore.users);
 
-const deleteItem = (row: Accounts) => {
-  const index = rows.value.findIndex(r => r.username === row.username);
-  if (index !== -1) {
-    rows.value.splice(index, 1);
-  }
-};
+onMounted(async () => {
+  await userStore.loadUsers();
+});
+
+async function updateStatus(status: 'active' | 'inactive' | 'pending', key: string) {
+  await authStore.updateStatus(status, key);
+  await userStore.loadUsers();
+}
 
 </script>
 
 <template>
   <q-page class="q-pa-md" style="margin-top: 1rem;">
-    <q-table 
+    <q-table
       title="Users"
       :rows="rows"
       :columns="columns"
       :rows-per-page-options="rowsPerPage"
-      row-key="name"
+      row-key="key"
     >
-      <!-- <template #body-cell-status="props">
-        <q-td :props="props">
-          <q-badge 
-            :color="props.row.status === 'active' ? 'positive' : 
-                  props.row.status === 'inactive' ? 'negative' : 'warning'"
-          >
-            {{ props.row.status }}
-          </q-badge>
-        </q-td>
-      </template> -->
-
       <template v-slot:body="props">
         <q-tr :props="props">
-          <q-td key="username" :props="props">
-            {{ props.row.username }}
-            <q-popup-edit v-model="props.row.username" v-slot="scope">
-              <q-input v-model="scope.value" dense autofocus counter @keyup.enter="scope.set" />
-            </q-popup-edit>
+          <q-td key="fullName" :props="props">
+            {{ props.row.fullName }}
+          </q-td>
+          <q-td key="email" :props="props">
+            {{ props.row.email }}
           </q-td>
           <q-td key="role" :props="props">
-            {{ props.row.role }}
-            <q-popup-edit v-model="props.row.role" title="Update role" buttons v-slot="scope">
-              <q-input v-model="scope.value" dense autofocus />
-            </q-popup-edit>
+            <div :class="{
+              'role-badge': true,
+              'role-admin': props.row.role === 'admin',
+              'role-teacher': props.row.role === 'teacher',
+              'role-student': props.row.role === 'student',
+              'role-supervisor': props.row.role === 'supervisor'
+            }">
+              {{ props.row.role }}
+            </div>
           </q-td>
           <q-td key="status" :props="props">
             <div class="text-pre-wrap">
-              <q-badge 
-                :color="props.row.status === 'active' ? 'positive' : 
+              <q-badge
+                :color="props.row.status === 'active' ? 'green' :
                       props.row.status === 'inactive' ? 'negative' : 'warning'"
               >
                 {{ props.row.status }}
               </q-badge>
             </div>
-            <q-popup-edit v-model="props.row.status" title="Update status" v-slot="scope">
-              <q-input v-model="scope.value" dense autofocus />
+            <q-popup-edit v-model="props.row.status" title="Update status" buttons v-slot="scope" @save="(val) => updateStatus(val, props.row.key)">
+              <q-option-group
+                v-model="scope.value"
+                :options="[
+                  { label: 'Active', value: 'active' },
+                  { label: 'Pending', value: 'pending' },
+                  { label: 'Inactive', value: 'inactive' }
+                ]"
+                type="radio"
+                dense
+              />
             </q-popup-edit>
-          </q-td>
-          <q-td key="actions" :props="props">
-            <q-btn
-              color="red"
-              icon="delete"
-              dense
-              round
-              @click="deleteItem(props.row)"
-            >
-              <q-tooltip>Delete</q-tooltip>
-            </q-btn>
           </q-td>
         </q-tr>
       </template>
     </q-table>
   </q-page>
 </template>
+
+<style scoped>
+.role-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.role-admin {
+  background-color: #790622;
+  color: white;
+}
+
+.role-teacher {
+  background-color: #31ccec;
+  color: white;
+}
+
+.role-supervisor {
+  background-color: #f2c037;
+  color: white;
+}
+
+.role-student {
+  background-color: #21ba45;
+  color: white;
+}
+</style>

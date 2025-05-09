@@ -1,4 +1,13 @@
 // app global css in SCSS form
 body {
-    color: #616161;
+    color: $textColor;
+    background-color: $backgroundColor;
+}
+
+.q-toolbar{
+    color: #616161; 
+    background-color: white; 
+    padding: 0.8rem;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

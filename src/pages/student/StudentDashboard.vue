@@ -1,235 +1,271 @@
 <script setup lang="ts">
-import ApexCharts from 'apexcharts';
-import { onMounted, onUnmounted } from 'vue';
-import { logout } from 'src/utils/redirect';
+import { useClassStore } from 'src/stores/class-store';
+import { useAuthStore } from 'src/stores/auth-store';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { Notify, Dialog } from 'quasar';
+import { ClassModel } from 'src/models/class.models';
 
-const AttendanceTrend = {
-  chart: {
-    type: 'line',
-    height: 280,
-    toolbar: { show: false },
-  },
-  series: [
-    {
-      name: 'Attendance Rate',
-      data: [85, 88, 92, 90, 95, 93, 96],
-    },
-  ],
-  xaxis: {
-    categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  },
-  colors: ['#7367F0'],
-  stroke: { width: 2, curve: 'smooth' },
+const classStore = useClassStore();
+const authStore = useAuthStore();
+const router = useRouter();
+
+const showEnrollDialog = ref(false);
+const classCode = ref('');
+const isLoading = ref(false);
+const codeError = ref('');
+
+const studentClasses = computed(() => {
+  return classStore.classes;
+});
+
+const handleEnrollDialog = () => {
+  openEnrollDialog();
 };
 
-const CurrentSchedule = {
-  chart: {
-    type: 'bar',
-    height: 200,
-    stacked: true,
-    toolbar: { show: false },
-  },
-  plotOptions: {
-    bar: {
-      columnWidth: '45%',
-      borderRadius: 5,
-    },
-  },
-  series: [
-    {
-      name: 'Classes',
-      data: [3, 2, 3, 2, 4, 4, 1],
-    },
-  ],
-  xaxis: {
-    categories: ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'],
-  },
-  colors: ['#00E396'],
-};
+onMounted(async () => {
+  await loadStudentClasses();
 
-onMounted(() => {
-  const attendanceChart = new ApexCharts(
-    document.querySelector('#attendance-trend'),
-    AttendanceTrend,
-  );
-  const scheduleChart = new ApexCharts(
-    document.querySelector('#current-schedule'),
-    CurrentSchedule,
-  );
-  void attendanceChart.render();
-  void scheduleChart.render();
+  window.addEventListener('open-enroll-dialog', handleEnrollDialog);
 });
 
 onUnmounted(() => {
-  const attendanceChart = ApexCharts.getChartByID('attendance-trend');
-  const scheduleChart = ApexCharts.getChartByID('current-schedule');
-  if (attendanceChart) attendanceChart.destroy();
-  if (scheduleChart) scheduleChart.destroy();
+  window.removeEventListener('open-enroll-dialog', handleEnrollDialog);
 });
 
-function signOff() {
-  logout();
+async function loadStudentClasses() {
+  if (authStore.currentAccount?.key) {
+    await classStore.loadClassesByStudent(authStore.currentAccount.key);
+  }
+}
+
+function openEnrollDialog() {
+  showEnrollDialog.value = true;
+  classCode.value = '';
+  codeError.value = '';
+}
+
+async function enrollInClass() {
+  if (!classCode.value) {
+    codeError.value = 'Please enter a class code';
+    return;
+  }
+
+  isLoading.value = true;
+  codeError.value = '';
+
+  try {
+    const foundClass = await classStore.findClassByCode(classCode.value);
+
+    if (!foundClass) {
+      codeError.value = 'Invalid class code. Please check and try again.';
+      isLoading.value = false;
+      return;
+    }
+
+    if (
+      authStore.currentAccount?.key &&
+      foundClass.enrolled?.find((e) => e.key == authStore.currentAccount?.key)
+    ) {
+      codeError.value = 'You are already enrolled in this class.';
+      isLoading.value = false;
+      return;
+    }
+
+    if (authStore.currentAccount) {
+      await classStore.enroll({
+        class: foundClass,
+        student: authStore.currentAccount,
+      });
+
+      Notify.create({
+        message: `Successfully enrolled in ${foundClass.name}`,
+        color: 'green',
+        icon: 'check_circle',
+        position: 'top',
+        timeout: 3000,
+      });
+
+      await loadStudentClasses();
+
+      showEnrollDialog.value = false;
+    }
+  } catch (error) {
+    console.error('Error enrolling in class:', error);
+    codeError.value = 'An error occurred. Please try again.';
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+function navigateToClass(cls: { key?: string }) {
+  void router.push({ name: 'studentClass', params: { classKey: cls.key } });
+}
+
+async function unenrollCourse(cls: ClassModel) {
+  if (!cls.key || !authStore.currentAccount?.key) {
+    return;
+  }
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      Dialog.create({
+        title: 'Confirm Unenrollment',
+        message: `Are you sure you want to unenroll from ${cls.name}?`,
+        persistent: true,
+        color: 'primary',
+        ok: {
+          label: 'Confirm',
+          color: 'negative',
+          unelevated: true,
+        },
+        cancel: {
+          label: 'Cancel',
+          color: 'grey',
+          flat: true,
+        },
+      })
+        .onOk(() => {
+          resolve();
+        })
+        .onCancel(() => {
+          reject(new Error('Cancelled'));
+        })
+        .onDismiss(() => {
+          reject(new Error('Dismissed'));
+        });
+    });
+  } catch {
+    return;
+  }
+
+  try {
+    const success = await classStore.unenroll({
+      classKey: cls.key,
+      studentKey: authStore.currentAccount.key,
+    });
+
+    if (success) {
+      Notify.create({
+        message: `Successfully unenrolled from ${cls.name}`,
+        color: 'green',
+        icon: 'check_circle',
+        position: 'top',
+        timeout: 3000,
+      });
+
+      await loadStudentClasses();
+    } else {
+      Notify.create({
+        message: 'Failed to unenroll from class',
+        color: 'negative',
+        icon: 'error',
+        position: 'top',
+        timeout: 3000,
+      });
+    }
+  } catch (error) {
+    console.error('Error unenrolling from class:', error);
+    Notify.create({
+      message: 'An error occurred while unenrolling',
+      color: 'negative',
+      icon: 'error',
+      position: 'top',
+      timeout: 3000,
+    });
+  }
 }
 </script>
 
 <template>
-  <q-page class="q-pa-md student-dashboard">
-    <div class="header">
-      <h1 class="page-title">Student Dashboard</h1>
-      <q-btn color="primary" @click="signOff" class="logout-btn">Logout</q-btn>
-    </div>
+  <q-page class="q-pa-md">
+    <div class="row q-col-gutter-md">
+      <div class="col-12">
+        <q-card>
+          <q-card-section>
+            <div class="text-h6">My Classes</div>
+          </q-card-section>
 
-    <div class="row">
-      <div class="col-12 row" style="margin-bottom: 1rem">
-        <div class="grid col-3 cardContainer">
-          <q-card class="col-2 card">
-            <q-card-section>
-              <div class="metric-item">
-                <q-icon name="today" color="primary" size="2rem" />
-                <div>
-                  <h2 class="no-margin">3</h2>
-                  <p class="metric-label">Classes Today</p>
-                </div>
-              </div>
-            </q-card-section>
-          </q-card>
+          <q-list bordered separator>
+            <q-item
+              v-for="theClass in studentClasses"
+              :key="String(theClass.key)"
+              clickable
+              v-ripple
+              @click="navigateToClass(theClass)"
+            >
+              <q-item-section avatar>
+                <q-avatar color="primary" text-color="white">
+                  {{ theClass.name[0] }}
+                </q-avatar>
+              </q-item-section>
 
-          <q-card class="col-2 card">
-            <q-card-section>
-              <div class="metric-item">
-                <q-icon name="check_circle" color="primary" size="2rem" />
-                <div>
-                  <h2 class="no-margin">94%</h2>
-                  <p class="metric-label">Attendance</p>
-                </div>
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div id="attendance-trend" class="col chart-card" style="margin-left: 1rem"></div>
+              <q-item-section>
+                <q-item-label>{{ theClass.name }} - {{ theClass.section }}</q-item-label>
+                <q-item-label caption>{{ theClass.academicYear }}</q-item-label>
+              </q-item-section>
+
+              <q-item-section side>
+                <q-btn color="red" icon="delete" dense round @click.stop="unenrollCourse(theClass)">
+                  <q-tooltip>Unenroll</q-tooltip>
+                </q-btn>
+              </q-item-section>
+            </q-item>
+
+            <q-item v-if="studentClasses.length === 0">
+              <q-item-section>
+                <q-item-label class="text-center text-grey">
+                  You are not enrolled in any classes yet.
+                  <div class="q-mt-sm">
+                    <q-btn color="primary" label="Enroll in a Class" @click="openEnrollDialog" />
+                  </div>
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card>
       </div>
-
-      <div class="col-12 row">
-        <div id="current-schedule" class="chart-card col" style="margin-right: 1rem"></div>
-        <q-markup-table class="schedule-table col-4">
-          <thead>
-            <tr>
-              <th class="text-left">Time</th>
-              <th class="text-left">Course</th>
-              <th class="text-left">Room</th>
-              <th class="text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>08:00 - 09:30</td>
-              <td>Database Systems</td>
-              <td>Room 301</td>
-              <td><q-icon name="check" color="positive" /> Present</td>
-            </tr>
-            <tr>
-              <td>10:00 - 11:30</td>
-              <td>Network Fundamentals</td>
-              <td>Lab B</td>
-              <td><q-icon name="schedule" color="warning" /> Upcoming</td>
-            </tr>
-            <tr>
-              <td>13:00 - 14:30</td>
-              <td>Web Development</td>
-              <td>Room 215</td>
-              <td><q-icon name="schedule" color="warning" /> Upcoming</td>
-            </tr>
-          </tbody>
-        </q-markup-table>
-      </div>
-
-      <div class="schedule-section"></div>
     </div>
 
-    <div>
-      <router-view />
-    </div>
+    <q-page-sticky position="bottom-right" :offset="[18, 18]">
+      <q-btn fab icon="add" color="accent" @click="openEnrollDialog" />
+    </q-page-sticky>
+
+    <q-dialog v-model="showEnrollDialog" persistent>
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6">Enroll in a Class</div>
+        </q-card-section>
+
+        <q-card-section>
+          <q-input
+            v-model="classCode"
+            label="Enter Class Code"
+            :error="!!codeError"
+            :error-message="codeError"
+            :rules="[
+              (v) => !!v || 'Class code is required',
+              (v) => v.length >= 4 || 'Code must be at least 4 characters',
+            ]"
+            @keyup.enter="enrollInClass"
+          />
+          <div class="text-caption q-mt-sm">
+            Enter the class code provided by your teacher to enroll in the class.
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="negative" v-close-popup />
+          <q-btn
+            flat
+            label="Enroll"
+            color="positive"
+            @click="enrollInClass"
+            :loading="isLoading"
+            :disable="!classCode"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
-
-<style scoped>
-.student-dashboard {
-  background-color: #f8f9fa;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  color: #2c3e50;
-  margin: 0;
-}
-
-.cardContainer {
-  display: grid;
-  gap: 16px;
-}
-
-.card {
-  background: white;
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.metric-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.metric-item h2 {
-  margin: 0;
-  font-size: 2rem;
-  color: #2c3e50;
-}
-
-.metric-label {
-  margin: 0;
-  color: #7f8c8d;
-  font-size: 0.9rem;
-}
-
-.chart-container {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.chart-card {
-  background: white;
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.schedule-table {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.schedule-table th {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #2c3e50;
-}
-
-.schedule-table td {
-  color: #34495e;
-}
-
-.logout-btn {
-  align-self: flex-start;
-}
-</style>

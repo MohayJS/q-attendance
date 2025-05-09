@@ -1,4 +1,5 @@
 import { defineRouter } from '#q-app/wrappers';
+import { Notify } from 'quasar';
 import {
   createMemoryHistory,
   createRouter,
@@ -40,6 +41,40 @@ export default defineRouter(function (/* { store, ssrContext } */) {
       next({ name: 'home' })
     } else if (to.meta?.admin && user?.role !== 'admin') {
       next({ name: 'login' })
+    } else {
+      next();
+    }
+  });
+
+
+  const showNotif = () => {
+    Notify.create({
+      message: 'You do not have access to this page',
+      color: 'negative',
+      icon: 'warning',
+      position: 'top',
+      timeout: 3000,
+      progress: true
+    });
+  }
+
+  Router.beforeEach(async (to, from, next) => {
+    const user = await authStore.authorizeUser()
+    if (to.meta?.anonymous && user && to.name != 'home') {
+      showNotif()
+      next({ name: 'home' })
+      // } if (to.meta?.admin && user?.role !== 'admin') {
+      //   showNotif()
+      //   next({ name: 'home' })
+    } else if (to.meta?.supervisor && user?.role !== 'supervisor' && to.name != 'home') {
+      showNotif()
+      next({ name: 'home' })
+      // } else if (to.meta?.teacher && user?.role !== 'teacher') {
+      //   showNotif()
+      //   next({ name: 'home' })
+      // } else if (to.meta?.student && user?.role !== 'student') {
+      //   showNotif()
+      //   next({ name: 'home' })
     } else {
       next();
     }

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { Notify } from 'quasar';
 import type { UserModel } from 'src/models/user.models';
 import { firebaseService } from 'src/services/firebase-service';
 interface IState {
@@ -16,13 +17,24 @@ export const useAuthStore = defineStore('auth', {
     },
     async loginWithGoogle() {
       await firebaseService.signInWithGoogle();
-      return this.authorizeUser();
+      const user = await firebaseService.authorizeUser();
+      if (user) {
+        const userKey = user.uid;
+        const userData = await firebaseService.getRecord('users', userKey);
+
+        if (userData) {
+          return false;
+        }
+
+        return true;
+      }
+      return false;
     },
-    async register(email: string, password: string) {
+    async register(email: string, password: string, displayName: string, role: string) {
       await firebaseService.registerWithEmailPassword(email, password);
-      return this.authorizeUser();
+      return this.authorizeUser(displayName, role);
     },
-    async authorizeUser() {
+    async authorizeUser(displayName: string = '', role: string = '') {
       const user = await firebaseService.authorizeUser();
       if (user) {
         this.currentAccount = {
@@ -30,8 +42,10 @@ export const useAuthStore = defineStore('auth', {
           avatar: user.photoURL || '',
           email: user.email || '',
           emailVerified: !!user.emailVerified,
-          fullName: user.displayName || '',
-          role: 'student'
+          fullName: user.displayName || displayName,
+          role: role as UserModel['role'],
+          status: 'active',
+
         }
         const userKey = this.currentAccount.key || '';
         const userData = await firebaseService.getRecord('users', userKey);
@@ -44,6 +58,32 @@ export const useAuthStore = defineStore('auth', {
       } else {
         this.currentAccount = undefined;
       }
+    },
+    async updateRole(role: 'student' | 'teacher' | 'supervisor' | 'admin', key: string) {
+      await firebaseService.updateRecord('users', key, { role })
+        .then(() => {
+          Notify.create({
+            message: 'Role updated',
+            color: 'green',
+            icon: 'check_circle',
+            position: 'top',
+            timeout: 3000,
+            progress: true
+          });
+        })
+    },
+    async updateStatus(status: 'active' | 'inactive' | 'pending', key: string) {
+      await firebaseService.updateRecord('users', key, { status })
+        .then(() => {
+          Notify.create({
+            message: `Status updated to ${status}`,
+            color: status === 'active' ? 'green' : status === 'pending' ? 'orange' : 'red',
+            icon: status === 'active' ? 'check_circle' : status === 'pending' ? 'schedule' : 'block',
+            position: 'top',
+            timeout: 3000,
+            progress: true
+          });
+        })
     },
     async logout() {
       await firebaseService.signOut();
