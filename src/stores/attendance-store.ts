@@ -149,15 +149,33 @@ export const useAttendanceStore = defineStore('attendance', {
         throw error;
       }
     },
+    async latestCallMeeting(meetingKey: string) {
+      try {
+        const existingMeeting = await firebaseService.getRecord('meetings', meetingKey);
+        if (!existingMeeting) {
+          throw new Error('Meeting not found');
+        }
+        const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
+        await firebaseService.updateRecord('meetings', meetingKey, {
+          latestCall: now
+        });
 
+        return true;
+      } catch (error) {
+        console.error('Error updating meeting:', error);
+        throw error;
+      }
+    },
     async concludeMeeting(meetingKey: string) {
       try {
         const existingMeeting = await firebaseService.getRecord('meetings', meetingKey);
         if (!existingMeeting) {
           throw new Error('Meeting not found');
         }
+        const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
         await firebaseService.updateRecord('meetings', meetingKey, {
-          status: 'concluded'
+          status: 'concluded',
+          latestCall: now
         });
 
         return true;

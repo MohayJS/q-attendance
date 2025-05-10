@@ -7,6 +7,7 @@ export interface ClassMeetingModel extends Entity {
   teacher: string;
   checkIns?: MeetingCheckInModel[] | undefined,
   latestCheckIn?: string;
+  latestCall?: string;
   checkInCount?: number;
 }
 export interface CheckInComments extends Entity {

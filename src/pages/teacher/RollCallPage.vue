@@ -169,7 +169,7 @@ async function saveRollCall(isSubmit: boolean = false) {
         });
       });
 
-      await Promise.all(updatePromises).then(() => {
+      await Promise.all(updatePromises).then(async () => {
         Notify.create({
           message: 'Roll call saved',
           color: 'green',
@@ -177,8 +177,9 @@ async function saveRollCall(isSubmit: boolean = false) {
           position: 'top',
           timeout: 3000,
         });
+        await attendanceStore.latestCallMeeting(currentMeeting.value?.key || '');
 
-        void router.push({
+        await router.push({
           name: 'teacherClass',
           params: {
             classKey: route.params.classKey as string,
