@@ -69,6 +69,14 @@ export const useAttendanceStore = defineStore('attendance', {
         },
       })
     },
+    streamCheckIns(meetingKey: string, onSnapshot: (meetings: MeetingCheckInModel[]) => void | Promise<void>) {
+      return firebaseService.streamRecords('check-ins', {
+        path: `/meetings/${meetingKey}`,
+        onSnapshot(records) {
+          void onSnapshot(records);
+        }
+      });
+    },
 
     async checkExistingMeeting(classKey: string, dateTime: string) {
       await this.loadClassMeetings(classKey);
@@ -128,10 +136,12 @@ export const useAttendanceStore = defineStore('attendance', {
       try {
         const path = `/meetings/${payload.meetingKey}`
         const existingRecord = await firebaseService.getRecord('check-ins', payload.student, path);
-        const marked = existingRecord?.status == 'check-in' && payload.status != 'check-in';
+        const marked = existingRecord?.status == 'check-in' || payload.status != 'check-in';
+        const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
         await firebaseService.updateRecord('check-ins', payload.student, {
           status: payload.status,
-          markedInTime: marked ? date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss') : ''
+          checkInTime: existingRecord?.checkInTime || now,
+          markedInTime: marked ? now : ''
         }, path);
         return true;
       } catch (error) {

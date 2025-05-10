@@ -9,9 +9,14 @@ export interface ClassMeetingModel extends Entity {
   latestCheckIn?: string;
   checkInCount?: number;
 }
+export interface CheckInComments extends Entity {
+  msg: string,
+  from: string,
+  date: string
+}
 export interface MeetingCheckInModel extends Entity {
   checkInTime: string;
   status: 'check-in' | 'absent' | 'late' | 'present';
   markedInTime?: string;
-  comments?: string;
+  comments?: CheckInComments[];
 }
