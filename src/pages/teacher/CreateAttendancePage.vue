@@ -6,6 +6,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { date, uid, Notify } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
+import { ClassModel } from 'src/models/class.models';
 
 const route = useRoute();
 const router = useRouter();
@@ -20,12 +21,13 @@ const isSubmitting = ref(false);
 const existingMeetingFound = ref(false);
 
 const activeClass = computed(() => {
-  if (typeof route.params?.classKey === 'string') {
-    const classKey = route.params.classKey;
-    return (classStore.teaching || []).find((c) => c.key === classKey);
+  if (route.params?.classKey === currentClass.value?.key) {
+    return currentClass.value;
   }
   return undefined;
 });
+
+const currentClass = ref<ClassModel>();
 
 const currentTeacher = computed(() => {
   return authStore.currentAccount;
@@ -40,7 +42,7 @@ const formattedDateTime = computed(() => {
 
 onMounted(async () => {
   if (typeof route.params?.classKey === 'string') {
-    await classStore.loadClass(route.params.classKey);
+    currentClass.value = await classStore.loadClass(route.params.classKey);
     await attendanceStore.loadClassMeetings(route.params.classKey);
   }
 });
@@ -59,7 +61,7 @@ const checkExistingMeeting = () => {
 };
 
 const createAttendanceRecord = async () => {
-  if (!activeClass.value?.key || !currentTeacher.value?.key) {
+  if (!activeClass.value?.key || !activeClass.value?.teachers) {
     Notify.create({
       message: 'Missing class or teacher information',
       color: 'negative',
@@ -91,7 +93,7 @@ const createAttendanceRecord = async () => {
       classKey: activeClass.value.key,
       date: dateTimeString,
       status: attendanceStatus.value,
-      teacher: currentTeacher.value.key,
+      teacher: currentTeacher.value?.key || '',
       checkIns: [],
     };
 

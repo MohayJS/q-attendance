@@ -6,10 +6,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { date, Notify } from 'quasar';
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
-
-interface StudentAttendanceRecord extends MeetingCheckInModel {
-  date?: string;
-}
+import { ClassModel } from 'src/models/class.models';
 
 const route = useRoute();
 const classStore = useClassStore();
@@ -18,16 +15,22 @@ const authStore = useAuthStore();
 
 const tab = ref('check-in');
 const isCheckingIn = ref(false);
-const studentAttendanceHistory = ref<StudentAttendanceRecord[]>([]);
+const studentAttendanceHistory = computed(() => {
+  return attendanceStore.meetings.reduce((all, meeting) => {
+    if (meeting.checkIns) {
+      all.push(...meeting.checkIns);
+    }
+    return all;
+  }, [] as MeetingCheckInModel[]);
+});
 
 const activeClass = computed(() => {
-  if (typeof route.params?.classKey === 'string') {
-    const classKey = route.params.classKey;
-    return (classStore.teaching || []).find((c) => c.key === classKey);
+  if (route.params?.classKey === currentClass.value?.key) {
+    return currentClass.value;
   }
   return undefined;
 });
-
+const currentClass = ref<ClassModel>();
 const currentStudent = computed(() => {
   return authStore.currentAccount;
 });
@@ -38,7 +41,7 @@ const openAttendanceSessions = computed(() => {
 
     if (
       meeting.checkIns &&
-      meeting.checkIns.some((checkIn) => checkIn.student === currentStudent.value?.key)
+      meeting.checkIns.some((checkIn) => checkIn.key === currentStudent.value?.key)
     ) {
       return false;
     }
@@ -49,44 +52,17 @@ const openAttendanceSessions = computed(() => {
 
 onMounted(async () => {
   if (typeof route.params?.classKey === 'string') {
-    await classStore.loadClass(route.params.classKey);
+    currentClass.value = await classStore.loadClass(route.params.classKey);
     await loadAttendanceSessions();
   }
 });
 
 async function loadAttendanceSessions() {
   if (activeClass.value?.key) {
-    await attendanceStore.loadClassMeetings(activeClass.value.key);
-    loadStudentAttendanceHistory();
+    await attendanceStore.loadClassMeetings(activeClass.value.key, {
+      student: authStore.currentAccount?.key,
+    });
   }
-}
-
-function loadStudentAttendanceHistory() {
-  if (!currentStudent.value?.key || !activeClass.value?.key) return;
-  const history: StudentAttendanceRecord[] = [];
-
-  attendanceStore.meetings.forEach((meeting) => {
-    const studentCheckIn = meeting.checkIns?.find(
-      (checkIn) => checkIn.student === currentStudent.value?.key,
-    );
-
-    if (studentCheckIn) {
-      history.push({
-        ...studentCheckIn,
-
-        date: meeting.date,
-      });
-    } else if (meeting.status === 'concluded') {
-      history.push({
-        key: '',
-        student: currentStudent.value?.key || '',
-        checkInTime: '-',
-        status: 'absent',
-        date: meeting.date,
-      });
-    }
-  });
-  studentAttendanceHistory.value = history;
 }
 
 async function checkInToSession(meeting: ClassMeetingModel) {
@@ -253,7 +229,8 @@ function getStatusLabel(status: MeetingCheckInModel['status']): string {
               <q-item-section>
                 <q-item-label>{{ formatDate(session.date) }}</q-item-label>
                 <q-item-label caption>
-                  Status: <q-badge color="green">{{ session.status }}</q-badge>
+                  Status:
+                  <q-badge color="green">{{ session.status }}</q-badge>
                 </q-item-label>
               </q-item-section>
 
@@ -280,7 +257,7 @@ function getStatusLabel(status: MeetingCheckInModel['status']): string {
           <q-list v-else bordered separator>
             <q-item v-for="record in studentAttendanceHistory" :key="record.key" class="q-my-sm">
               <q-item-section>
-                <q-item-label>{{ formatDate(record.date) }}</q-item-label>
+                <q-item-label>{{ formatDate(record.checkInTime) }}</q-item-label>
                 <q-item-label caption> Check-in time: {{ record.checkInTime }} </q-item-label>
               </q-item-section>
 

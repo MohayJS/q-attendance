@@ -95,24 +95,30 @@ export const useClassStore = defineStore('Class', {
       class: ClassModel,
       student: UserModel
     }) {
-      const record = await firebaseService.createRecord('enrolled', payload.student, `/classes/${payload.class.key}`);
-      const cls = this.enrolled.find(c => c.key == payload.class.key);
-      if (record && cls) {
+      const [student, cls] = await Promise.all([
+        firebaseService.createRecord('enrolled', payload.student, `/classes/${payload.class.key}`),
+        firebaseService.getRecord('classes', payload.class.key)
+      ]);
+      if (student && cls) {
         cls.enrolled = cls.enrolled || [];
-        cls.enrolled.push(record);
+        cls.enrolled.push(student);
+        const keepings = await firebaseService.getRecord('class-keepings', payload.student.key);
         await firebaseService.updateRecord('class-keepings', payload.student.key, {
-          enrolled: cls.enrolled.map(e => e.key)
+          enrolled: [...new Set([...keepings?.enrolled || [], cls.key])]
         })
       }
     },
     async join(payload: { class: ClassModel, teacher: UserModel }) {
-      const record = await firebaseService.createRecord('teachers', payload.teacher, `/classes/${payload.class.key}`);
-      const cls = this.teaching.find(c => c.key == payload.class.key);
-      if (record && cls) {
+      const [teacher, cls] = await Promise.all([
+        firebaseService.createRecord('teachers', payload.teacher, `/classes/${payload.class.key}`),
+        firebaseService.getRecord('classes', payload.class.key)
+      ]);
+      if (teacher && cls) {
         cls.teachers = cls.teachers || [];
-        cls.teachers.push(record);
+        cls.teachers.push(teacher);
+        const keepings = await firebaseService.getRecord('class-keepings', payload.teacher.key);
         await firebaseService.updateRecord('class-keepings', payload.teacher.key, {
-          enrolled: cls.teachers.map(e => e.key)
+          teaching: [...new Set([...keepings?.teaching || [], cls.key])]
         })
       }
     },

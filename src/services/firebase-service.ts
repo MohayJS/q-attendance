@@ -7,7 +7,7 @@ import {
   signInWithEmailAndPassword, signInWithPopup, signOut, User
 } from "firebase/auth";
 import { getAuth } from "firebase/auth";
-import { addDoc, collection, CollectionReference, deleteDoc, doc, getDoc, getDocFromCache, getDocs, getFirestore, or, query, QueryFieldFilterConstraint, setDoc, where, WhereFilterOp } from "firebase/firestore";
+import { addDoc, collection, CollectionReference, deleteDoc, doc, getCountFromServer, getDoc, getDocFromCache, getDocs, getFirestore, or, query, QueryFieldFilterConstraint, setDoc, where, WhereFilterOp } from "firebase/firestore";
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
 import { Entity } from 'src/models/base.model';
 import { ClassKeepingModel, ClassModel } from 'src/models/class.models';
@@ -246,6 +246,16 @@ class FirebaseService {
     } else {
       return snapshot.docs.map((item) => item.data() as CollectionTypes[C]);
     }
+  }
+  async countRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Condition<CollectionTypes[C]>): Promise<number> {
+    let collRef = collection(db, collectionName);
+    if (path) {
+      const parts = path.split('/');
+      const [colName] = parts.splice(1, 1);
+      collRef = collection(db, colName!, [...parts, collectionName].join('/'));
+    }
+    const response = await getCountFromServer(this.getCollRef(collRef, condition));
+    return response.data().count;
   }
 
 }

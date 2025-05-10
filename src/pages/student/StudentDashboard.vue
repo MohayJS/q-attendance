@@ -16,7 +16,7 @@ const isLoading = ref(false);
 const codeError = ref('');
 
 const studentClasses = computed(() => {
-  return classStore.teaching;
+  return classStore.enrolled;
 });
 
 const handleEnrollDialog = () => {
