@@ -7,7 +7,18 @@ import {
   signInWithEmailAndPassword, signInWithPopup, signOut, User
 } from "firebase/auth";
 import { getAuth } from "firebase/auth";
-import { addDoc, collection, CollectionReference, deleteDoc, doc, getCountFromServer, getDoc, getDocFromCache, getDocs, getFirestore, or, query, QueryFieldFilterConstraint, setDoc, where, WhereFilterOp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  CollectionReference,
+  deleteDoc, doc,
+  getCountFromServer, getDoc,
+  getDocFromCache, getDocs,
+  getFirestore, or, query,
+  QueryFieldFilterConstraint,
+  setDoc, where, WhereFilterOp,
+  onSnapshot
+} from "firebase/firestore";
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
 import { Entity } from 'src/models/base.model';
 import { ClassKeepingModel, ClassModel } from 'src/models/class.models';
@@ -247,6 +258,34 @@ class FirebaseService {
       return snapshot.docs.map((item) => item.data() as CollectionTypes[C]);
     }
   }
+  /**
+   * https://firebase.google.com/docs/firestore/query-data/listen
+   * @param collectionName
+   * @param path
+   * @param condition
+   * @returns
+   */
+  streamRecords<C extends CollectionName>(
+    collectionName: C, options: {
+      path?: string,
+      condition?: Condition<CollectionTypes[C]>,
+      onSnapshot: (docs: CollectionTypes[C][]) => void | Promise<void>
+    }) {
+    let collRef = collection(db, collectionName);
+    if (options.path) {
+      const parts = options.path.split('/');
+      const [colName] = parts.splice(1, 1);
+      collRef = collection(db, colName!, [...parts, collectionName].join('/'));
+    }
+    return onSnapshot(this.getCollRef(collRef, options.condition), (querySnapshot) => {
+      const records: CollectionTypes[C][] = [];
+      querySnapshot.forEach((doc) => {
+        records.push(doc.data() as CollectionTypes[C]);
+      });
+      void options.onSnapshot(records);
+    })
+  }
+
   async countRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Condition<CollectionTypes[C]>): Promise<number> {
     let collRef = collection(db, collectionName);
     if (path) {

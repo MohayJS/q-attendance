@@ -46,6 +46,30 @@ export const useAttendanceStore = defineStore('attendance', {
       }
     },
 
+    streamClassMeetings(classKey: string, options: {
+      student?: string | undefined
+      onSnapshot: (meetings: ClassMeetingModel[]) => void | Promise<void>
+    }) {
+      return firebaseService.streamRecords('meetings', {
+        condition: { classKey: { '==': classKey } },
+        async onSnapshot(records) {
+          const meetings = await Promise.all(records.map(async (m) => {
+            m.checkIns = [];
+            m.checkInCount = 0;
+            if (options.student) {
+              m.checkIns = await firebaseService.findRecords('check-ins', `/meetings/${m.key}`, {
+                key: { '==': options.student }
+              });
+            } else {
+              m.checkInCount = await firebaseService.countRecords('check-ins', `/meetings/${m.key}`)
+            }
+            return m;
+          }));
+          void options.onSnapshot(meetings);
+        },
+      })
+    },
+
     async checkExistingMeeting(classKey: string, dateTime: string) {
       await this.loadClassMeetings(classKey);
 
@@ -61,36 +85,28 @@ export const useAttendanceStore = defineStore('attendance', {
       status: MeetingCheckInModel['status']
     }) {
       try {
+        const checkInTime = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
         const checkInRecord: MeetingCheckInModel = {
           key: payload.student,
-          checkInTime: date.formatDate(new Date(), 'HH:mm:ss'),
+          checkInTime: checkInTime,
           status: payload.status || 'check-in',
         };
-        await firebaseService.createRecord('check-ins',
-          checkInRecord,
-          `/meetings/${payload.meeting.key}`
-        );
+        await Promise.all([
+          firebaseService.createRecord('check-ins',
+            checkInRecord,
+            `/meetings/${payload.meeting.key}`
+          ),
+          firebaseService.updateRecord('meetings', payload.meeting.key, {
+            latestCheckIn: checkInTime
+          })
+        ]);
+
         return checkInRecord;
       } catch (error) {
         console.error('Error checking in:', error);
         throw error;
       }
     },
-
-    // hasStudentCheckedIn(meetingKey: string, studentKey: string): boolean {
-    //   const meeting = this.meetings.find(m => m.key === meetingKey);
-    //   if (!meeting || !meeting.checkIns) return false;
-
-    //   return meeting.checkIns.some(checkIn => checkIn.key === studentKey);
-    // },
-
-    // getStudentAttendanceStatus(meetingKey: string, studentKey: string): MeetingCheckInModel['status'] | null {
-    //   const meeting = this.meetings.find(m => m.key === meetingKey);
-    //   if (!meeting || !meeting.checkIns) return null;
-
-    //   const checkIn = meeting.checkIns.find(checkIn => checkIn.key === studentKey);
-    //   return checkIn ? checkIn.status : null;
-    // },
 
     async loadMeeting(meetingKey: string) {
       const [record, checkIns] = await Promise.all([

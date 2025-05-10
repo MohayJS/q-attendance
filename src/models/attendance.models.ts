@@ -6,6 +6,7 @@ export interface ClassMeetingModel extends Entity {
   status: 'open' | 'cancelled' | 'concluded';
   teacher: string;
   checkIns?: MeetingCheckInModel[] | undefined,
+  latestCheckIn?: string;
   checkInCount?: number;
 }
 export interface MeetingCheckInModel extends Entity {
