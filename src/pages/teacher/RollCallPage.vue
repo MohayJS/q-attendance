@@ -4,20 +4,26 @@ import { date, Dialog, Notify } from 'quasar';
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { useClassStore } from 'src/stores/class-store';
-import { useUsersStore } from 'src/stores/user-store';
-import { UserModel } from 'src/models/user.models';
 import { useRoute, useRouter } from 'vue-router';
-
+import { ClassModel } from 'src/models/class.models';
+type StudentKey = string;
 const route = useRoute();
 const router = useRouter();
 const attendanceStore = useAttendanceStore();
 const classStore = useClassStore();
-const usersStore = useUsersStore();
 
-const meeting = ref<ClassMeetingModel | null>(null);
-const enrolledStudents = ref<UserModel[]>([]);
+const currentClass = ref<ClassModel>();
+const currentMeeting = ref<ClassMeetingModel>();
+const studentCheckIns = ref<MeetingCheckInModel[]>([]);
+const enrolledStudents = computed(() => currentClass.value?.enrolled || []);
 const isSubmitting = ref(false);
-const selectedStatuses = ref<Record<string, MeetingCheckInModel['status']>>({});
+const selectedStatuses = ref<Record<StudentKey, MeetingCheckInModel['status']>>({});
+const activeClass = computed(() => {
+  if (route.params?.classKey === currentClass.value?.key) {
+    return currentClass.value;
+  }
+  return undefined;
+});
 onMounted(async () => {
   const meetingKey = route.params.meetingKey as string;
   const classKey = route.params.classKey as string;
@@ -33,97 +39,48 @@ onMounted(async () => {
     void router.push({ name: 'teacherClass', params: { classKey } });
     return;
   }
-
-  await loadMeetingData(meetingKey, classKey);
-
-  await loadEnrolledStudents(classKey);
-
-  initializeSelectedStatuses();
+  if (typeof classKey === 'string') {
+    currentClass.value = await classStore.loadClass(classKey);
+  }
+  currentMeeting.value = await attendanceStore.loadMeeting(meetingKey);
+  attendanceStore.streamCheckIns(meetingKey, (checkIns) => {
+    studentCheckIns.value = checkIns;
+    initializeSelectedStatuses();
+  });
 });
 
-async function loadMeetingData(meetingKey: string, classKey: string) {
-  const meetings = await attendanceStore.loadClassMeetings(classKey);
-  const foundMeeting = meetings.find((m) => m.key === meetingKey);
-
-  if (!foundMeeting) {
-    Notify.create({
-      message: 'Meeting not found',
-      color: 'negative',
-      icon: 'error',
-      position: 'top',
-      timeout: 3000,
-    });
-    void router.push({ name: 'teacherClass', params: { classKey } });
-    return;
-  }
-
-  meeting.value = foundMeeting;
-
-  if (meeting.value.status !== 'open') {
-    Notify.create({
-      message: 'Roll call can only be performed for open attendance sessions',
-      color: 'negative',
-      icon: 'error',
-      position: 'top',
-      timeout: 3000,
-    });
-    void router.push({ name: 'teacherClass', params: { classKey } });
-  }
-}
-
-async function loadEnrolledStudents(classKey: string) {
-  if (!classStore.teaching.some((c) => c.key === classKey)) {
-    await classStore.loadClass(classKey);
-  }
-
-  const activeClass = classStore.teaching.find((c) => c.key === classKey);
-
-  if (!activeClass?.enrolled?.length) {
-    enrolledStudents.value = [];
-    return;
-  }
-
-  if (usersStore.users.length === 0) {
-    await usersStore.loadUsers();
-  }
-
-  enrolledStudents.value = usersStore.users.filter((user) =>
-    activeClass.enrolled?.find((e) => e.key == user.key || ''),
-  );
-}
 const initializeSelectedStatuses = () => {
-  if (!meeting.value) return;
+  if (!currentMeeting.value) return;
 
-  const statusMap: Record<string, MeetingCheckInModel['status']> = {};
-
+  const statusMap: Record<StudentKey, MeetingCheckInModel['status']> = {};
+  //assume everyone is absent first
   enrolledStudents.value.forEach((student) => {
     if (student.key) {
       statusMap[student.key] = 'absent';
     }
   });
 
-  if (meeting.value.checkIns) {
-    meeting.value.checkIns.forEach((checkIn) => {
+  if (studentCheckIns.value.length) {
+    studentCheckIns.value.forEach((checkIn) => {
       statusMap[checkIn.key] = checkIn.status;
     });
   }
-
   selectedStatuses.value = statusMap;
 };
 const studentsWithStatus = computed(() => {
-  if (!meeting.value) return [];
+  if (!currentMeeting.value) return [];
 
   return enrolledStudents.value.map((student) => {
     const studentKey = student.key || '';
-    const checkIn = meeting.value?.checkIns?.find((c) => c.key === studentKey);
+    const checkIn = studentCheckIns.value.find((c) => c.key === studentKey);
 
     return {
       key: studentKey,
       name: student.fullName || 'Unknown Student',
       email: student.email || '',
       status: selectedStatuses.value[studentKey] || 'absent',
-      checkInTime: checkIn?.checkInTime || '-',
-      checkInKey: checkIn?.key || '',
+      checkInTime: checkIn?.checkInTime || '[NO CHECKED-IN]',
+      checkInKey: checkIn?.key || student.key || '',
     };
   });
 });
@@ -159,7 +116,7 @@ async function saveRollCall(isSubmit: boolean = false) {
         if (!status) return Promise.resolve();
 
         return attendanceStore.updateCheckInStatus({
-          meetingKey: meeting.value?.key || '',
+          meetingKey: currentMeeting.value?.key || '',
           checkInKey: student.checkInKey,
           student: student.key,
           status: status,
@@ -176,7 +133,7 @@ async function saveRollCall(isSubmit: boolean = false) {
             timeout: 3000,
           });
 
-          await attendanceStore.concludeMeeting(meeting.value?.key || '');
+          await attendanceStore.concludeMeeting(currentMeeting.value?.key || '');
 
           void router.push({
             name: 'teacherClass',
@@ -205,14 +162,14 @@ async function saveRollCall(isSubmit: boolean = false) {
         if (!status) return Promise.resolve();
 
         return attendanceStore.updateCheckInStatus({
-          meetingKey: meeting.value?.key || '',
+          meetingKey: currentMeeting.value?.key || '',
           checkInKey: student.checkInKey,
           student: student.key,
           status: status,
         });
       });
 
-      await Promise.all(updatePromises).then(() => {
+      await Promise.all(updatePromises).then(async () => {
         Notify.create({
           message: 'Roll call saved',
           color: 'green',
@@ -220,8 +177,9 @@ async function saveRollCall(isSubmit: boolean = false) {
           position: 'top',
           timeout: 3000,
         });
+        await attendanceStore.latestCallMeeting(currentMeeting.value?.key || '');
 
-        void router.push({
+        await router.push({
           name: 'teacherClass',
           params: {
             classKey: route.params.classKey as string,
@@ -254,16 +212,20 @@ function cancelRollCall() {
 <template>
   <q-page padding>
     <div class="q-pa-md">
-      <q-card v-if="meeting">
+      <q-card v-if="currentMeeting">
         <q-card-section class="bg-primary text-white">
-          <div class="text-h6">Roll Call</div>
-          <div class="text-subtitle1">{{ formatDate(meeting.date) }}</div>
+          <div class="text-h6">Roll Call: {{ activeClass?.name }}</div>
+          <div class="text-subtitle1">{{ formatDate(currentMeeting.date) }}</div>
           <q-badge
             :color="
-              meeting.status === 'open' ? 'green' : meeting.status === 'cancelled' ? 'red' : 'blue'
+              currentMeeting.status === 'open'
+                ? 'green'
+                : currentMeeting.status === 'cancelled'
+                  ? 'red'
+                  : 'blue'
             "
           >
-            {{ meeting.status }}
+            {{ currentMeeting.status }}
           </q-badge>
         </q-card-section>
 

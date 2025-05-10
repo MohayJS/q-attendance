@@ -160,7 +160,13 @@ class FirebaseService {
    * @returns
    */
   async getRecord<C extends CollectionName>(collectionName: C, key: string, path?: string): Promise<CollectionTypes[C] | undefined> {
-    const docRef = path ? doc(db, collectionName, path, key) : doc(db, collectionName, key);
+    let collRef = collection(db, collectionName);
+    if (path) {
+      const parts = path.split('/');
+      const [colName] = parts.splice(1, 1);
+      collRef = collection(db, colName!, [...parts, collectionName].join('/'));
+    }
+    const docRef = doc(collRef, key);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data() as CollectionTypes[C];
@@ -175,7 +181,13 @@ class FirebaseService {
   * @returns
   */
   async getCachedRecord<C extends CollectionName>(collectionName: C, key: string, path?: string): Promise<CollectionTypes[C] | undefined> {
-    const docRef = path ? doc(db, collectionName, path, key) : doc(db, collectionName, key);
+    let collRef = collection(db, collectionName);
+    if (path) {
+      const parts = path.split('/');
+      const [colName] = parts.splice(1, 1);
+      collRef = collection(db, colName!, [...parts, collectionName].join('/'));
+    }
+    const docRef = doc(collRef, key);
     const docSnap = await getDocFromCache(docRef);
     if (docSnap.exists()) {
       return docSnap.data() as CollectionTypes[C];
@@ -191,7 +203,14 @@ class FirebaseService {
    * @returns
    */
   async updateRecord<C extends CollectionName>(collectionName: C, key: string, record: Partial<CollectionTypes[C]>, path?: string): Promise<boolean> {
-    const docSnap = path ? doc(db, collectionName, path, key) : doc(db, collectionName, key);
+
+    let collRef = collection(db, collectionName);
+    if (path) {
+      const parts = path.split('/');
+      const [colName] = parts.splice(1, 1);
+      collRef = collection(db, colName!, [...parts, collectionName].join('/'));
+    }
+    const docSnap = doc(collRef, key);
     try {
       await setDoc(docSnap, copyObject(record), { merge: true });
       return true;
@@ -208,9 +227,15 @@ class FirebaseService {
    * @returns
    */
   async deleteRecord<C extends CollectionName>(collectionName: C, key: string, path?: string): Promise<boolean> {
-    const docSnap = path ? doc(db, collectionName, path, key) : doc(db, collectionName, key);
+    let collRef = collection(db, collectionName);
+    if (path) {
+      const parts = path.split('/');
+      const [colName] = parts.splice(1, 1);
+      collRef = collection(db, colName!, [...parts, collectionName].join('/'));
+    }
+    const docRef = doc(collRef, key);
     try {
-      await deleteDoc(docSnap);
+      await deleteDoc(docRef);
       return true;
     } catch (error) {
       console.error('failed to deleting record:', error);
