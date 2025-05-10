@@ -72,11 +72,11 @@ async function loadMeetingData(meetingKey: string, classKey: string) {
 }
 
 async function loadEnrolledStudents(classKey: string) {
-  if (!classStore.classes.some((c) => c.key === classKey)) {
+  if (!classStore.teaching.some((c) => c.key === classKey)) {
     await classStore.loadClass(classKey);
   }
 
-  const activeClass = classStore.classes.find((c) => c.key === classKey);
+  const activeClass = classStore.teaching.find((c) => c.key === classKey);
 
   if (!activeClass?.enrolled?.length) {
     enrolledStudents.value = [];
@@ -104,7 +104,7 @@ const initializeSelectedStatuses = () => {
 
   if (meeting.value.checkIns) {
     meeting.value.checkIns.forEach((checkIn) => {
-      statusMap[checkIn.student] = checkIn.status;
+      statusMap[checkIn.key] = checkIn.status;
     });
   }
 
@@ -115,7 +115,7 @@ const studentsWithStatus = computed(() => {
 
   return enrolledStudents.value.map((student) => {
     const studentKey = student.key || '';
-    const checkIn = meeting.value?.checkIns?.find((c) => c.student === studentKey);
+    const checkIn = meeting.value?.checkIns?.find((c) => c.key === studentKey);
 
     return {
       key: studentKey,

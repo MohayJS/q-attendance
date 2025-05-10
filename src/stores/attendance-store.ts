@@ -13,24 +13,31 @@ export const useAttendanceStore = defineStore('attendance', {
   },
   actions: {
     async newClassMeeting(payload: ClassMeetingModel) {
-      const record = await firebaseService.createRecord('meetings', payload);
+      const record = await firebaseService.createRecord('meetings', {
+        ...payload,
+        checkIns: undefined
+      });
       if (record) {
         this.meetings.push(record);
       }
     },
-
-    async loadClassMeetings(classKey: string) {
+    async loadClassMeetings(classKey: string, condition?: { student?: string | undefined }) {
       try {
-        const records = await firebaseService.findRecords('meetings');
-
-        const classMeetings = records.filter(meeting => meeting.classKey === classKey);
-
-        for (const meeting of classMeetings) {
-          if (!meeting.checkIns) {
-            meeting.checkIns = [];
+        const records = await firebaseService.findRecords('meetings', undefined, {
+          classKey: { '==': classKey }
+        });
+        const classMeetings = await Promise.all(records.map(async m => {
+          m.checkIns = [];
+          m.checkInCount = 0;
+          if (condition?.student) {
+            m.checkIns = await firebaseService.findRecords('check-ins', `/meetings/${m.key}`, {
+              key: { '==': condition.student }
+            })
+          } else {
+            m.checkInCount = await firebaseService.countRecords('check-ins', `/meetings/${m.key}`)
           }
-        }
-
+          return m;
+        }));
         this.meetings = classMeetings;
         return this.meetings;
       } catch (error) {
@@ -54,41 +61,15 @@ export const useAttendanceStore = defineStore('attendance', {
       status: MeetingCheckInModel['status']
     }) {
       try {
-        const meetingIndex = this.meetings.findIndex(m => m.key === payload.meeting.key);
-        if (meetingIndex === -1) {
-          throw new Error('Meeting not found');
-        }
-
-        const meeting = this.meetings[meetingIndex];
-        if (!meeting) {
-          throw new Error('Meeting not found');
-        }
-
-        if (!meeting.checkIns) {
-          meeting.checkIns = [];
-        }
-
-        const existingCheckInIndex = meeting.checkIns.findIndex(c => c.student === payload.student);
-
         const checkInRecord: MeetingCheckInModel = {
+          key: payload.student,
           checkInTime: date.formatDate(new Date(), 'HH:mm:ss'),
-          key: existingCheckInIndex !== -1 && meeting.checkIns[existingCheckInIndex]
-            ? meeting.checkIns[existingCheckInIndex].key || ''
-            : '',
           status: payload.status || 'check-in',
-          student: payload.student
         };
-
-        if (existingCheckInIndex === -1) {
-          meeting.checkIns.push(checkInRecord);
-        } else {
-          meeting.checkIns[existingCheckInIndex] = checkInRecord;
-        }
-
-        await firebaseService.updateRecord('meetings', meeting.key, {
-          checkIns: meeting.checkIns
-        });
-
+        await firebaseService.createRecord('check-ins',
+          checkInRecord,
+          `/meetings/${payload.meeting.key}`
+        );
         return checkInRecord;
       } catch (error) {
         console.error('Error checking in:', error);
@@ -96,19 +77,30 @@ export const useAttendanceStore = defineStore('attendance', {
       }
     },
 
-    hasStudentCheckedIn(meetingKey: string, studentKey: string): boolean {
-      const meeting = this.meetings.find(m => m.key === meetingKey);
-      if (!meeting || !meeting.checkIns) return false;
+    // hasStudentCheckedIn(meetingKey: string, studentKey: string): boolean {
+    //   const meeting = this.meetings.find(m => m.key === meetingKey);
+    //   if (!meeting || !meeting.checkIns) return false;
 
-      return meeting.checkIns.some(checkIn => checkIn.student === studentKey);
-    },
+    //   return meeting.checkIns.some(checkIn => checkIn.key === studentKey);
+    // },
 
-    getStudentAttendanceStatus(meetingKey: string, studentKey: string): MeetingCheckInModel['status'] | null {
-      const meeting = this.meetings.find(m => m.key === meetingKey);
-      if (!meeting || !meeting.checkIns) return null;
+    // getStudentAttendanceStatus(meetingKey: string, studentKey: string): MeetingCheckInModel['status'] | null {
+    //   const meeting = this.meetings.find(m => m.key === meetingKey);
+    //   if (!meeting || !meeting.checkIns) return null;
 
-      const checkIn = meeting.checkIns.find(checkIn => checkIn.student === studentKey);
-      return checkIn ? checkIn.status : null;
+    //   const checkIn = meeting.checkIns.find(checkIn => checkIn.key === studentKey);
+    //   return checkIn ? checkIn.status : null;
+    // },
+
+    async loadMeeting(meetingKey: string) {
+      const [record, checkIns] = await Promise.all([
+        firebaseService.getRecord('meetings', meetingKey),
+        firebaseService.findRecords('check-ins', `/meetings/${meetingKey}`)
+      ]);
+      if (record) {
+        record.checkIns = checkIns || [];
+        return record;
+      }
     },
 
     async updateCheckInStatus(payload: {
@@ -118,55 +110,13 @@ export const useAttendanceStore = defineStore('attendance', {
       status: MeetingCheckInModel['status'];
     }) {
       try {
-        const meetingIndex = this.meetings.findIndex(m => m.key === payload.meetingKey);
-        if (meetingIndex === -1) {
-          throw new Error('Meeting not found');
-        }
-
-        const meeting = this.meetings[meetingIndex];
-        if (!meeting) {
-          throw new Error('Meeting not found');
-        }
-
-        if (!meeting.checkIns) {
-          meeting.checkIns = [];
-        }
-
-        let checkInIndex = -1;
-
-        if (payload.checkInKey) {
-          checkInIndex = meeting.checkIns.findIndex(c => c.key === payload.checkInKey);
-        }
-
-        if (checkInIndex === -1) {
-          checkInIndex = meeting.checkIns.findIndex(c => c.student === payload.student);
-        }
-
-        if (checkInIndex !== -1 && meeting.checkIns[checkInIndex]) {
-          const existingRecord = meeting.checkIns[checkInIndex]!;
-          existingRecord.status = payload.status;
-          if (existingRecord.status !== 'check-in' && payload.status !== 'check-in') {
-            existingRecord.markedInTime = date.formatDate(new Date(), 'HH:mm:ss');
-          }
-        } else {
-          const checkInRecord = {
-            key: '',
-            student: payload.student,
-            checkInTime: date.formatDate(new Date(), 'HH:mm:ss'),
-            status: payload.status
-          } as MeetingCheckInModel;
-
-          if (payload.status !== 'check-in') {
-            checkInRecord.markedInTime = date.formatDate(new Date(), 'HH:mm:ss');
-          }
-
-          meeting.checkIns.push(checkInRecord);
-        }
-
-        await firebaseService.updateRecord('meetings', payload.meetingKey, {
-          checkIns: meeting.checkIns
-        });
-
+        const path = `/meetings/${payload.meetingKey}`
+        const existingRecord = await firebaseService.getRecord('check-ins', payload.student, path);
+        const marked = existingRecord?.status == 'check-in' && payload.status != 'check-in';
+        await firebaseService.updateRecord('check-ins', payload.student, {
+          status: payload.status,
+          markedInTime: marked ? date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss') : ''
+        }, path);
         return true;
       } catch (error) {
         console.error('Error updating check-in status:', error);
@@ -176,18 +126,10 @@ export const useAttendanceStore = defineStore('attendance', {
 
     async concludeMeeting(meetingKey: string) {
       try {
-        const meetingIndex = this.meetings.findIndex(m => m.key === meetingKey);
-        if (meetingIndex === -1) {
+        const existingMeeting = await firebaseService.getRecord('meetings', meetingKey);
+        if (!existingMeeting) {
           throw new Error('Meeting not found');
         }
-
-        const meeting = this.meetings[meetingIndex];
-        if (!meeting) {
-          throw new Error('Meeting not found');
-        }
-
-        meeting.status = 'concluded';
-
         await firebaseService.updateRecord('meetings', meetingKey, {
           status: 'concluded'
         });
@@ -201,35 +143,19 @@ export const useAttendanceStore = defineStore('attendance', {
 
     async reopenMeeting(meetingKey: string) {
       try {
-        const meetingIndex = this.meetings.findIndex(m => m.key === meetingKey);
-        if (meetingIndex === -1) {
+        const existingMeeting = await firebaseService.getRecord('meetings', meetingKey);
+        if (!existingMeeting) {
           throw new Error('Meeting not found');
         }
-
-        const meeting = this.meetings[meetingIndex];
-        if (!meeting) {
-          throw new Error('Meeting not found');
-        }
-
-        meeting.status = 'open';
-
         await firebaseService.updateRecord('meetings', meetingKey, {
           status: 'open'
         });
 
         return true;
       } catch (error) {
-        console.error('Error reopening meeting:', error);
+        console.error('Error re-opening meeting:', error);
         throw error;
       }
-      // }) {
-
-      //   await firebaseService.createRecord('check-ins', {
-      //     checkInTime: date.formatDate(new Date(), 'HH:mm:ss'),
-      //     key: '',
-      //     status: payload.status || 'check-in',
-      //     student: payload.student
-      //   }, `meetings/${payload.meeting.key}/checkIns`);
     },
   },
 });

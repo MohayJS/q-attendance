@@ -15,13 +15,11 @@ const className = ref('');
 const classSection = ref('');
 
 const teacherClasses = computed(() => {
-  return classStore.classes.filter(cls =>
-    cls.teachers?.some(teacher => teacher.key === authStore.currentAccount?.key)
-  );
+  return classStore.teaching;
 });
 
 onMounted(async () => {
-  await classStore.loadClassesByTeacher(authStore.currentAccount?.key || '');
+  await classStore.loadUserClasses(authStore.currentAccount?.key || '');
 });
 
 function addNewClass() {
@@ -36,12 +34,8 @@ async function saveClass() {
       academicYear: date.formatDate(new Date(), 'YYYY'),
       classCode: Math.random().toString(36).substring(2, 6).toUpperCase(),
       section: classSection.value,
-      teachers: [authStore.currentAccount]
     };
-
-    await classStore.saveClass(newClass);
-
-    await classStore.loadClassesByTeacher(authStore.currentAccount?.key || '');
+    await classStore.saveClass(newClass, authStore.currentAccount);
   }
 
   className.value = '';
@@ -50,13 +44,11 @@ async function saveClass() {
 
 async function deleteCourse(cls: ClassModel) {
   await classStore.deleteClass(cls.key || '');
-  await classStore.loadClassesByTeacher(authStore.currentAccount?.key || '');
 }
 
 function navigateToClass(cls: ClassModel) {
   void router.push({ name: 'teacherClass', params: { classKey: cls.key } });
 }
-
 </script>
 
 <template>
@@ -73,7 +65,9 @@ function navigateToClass(cls: ClassModel) {
       <div class="col-12 col-md-3">
         <q-card class="dashboard-card">
           <q-card-section>
-            <div class="text-h6">{{ teacherClasses.reduce((sum, cls) => sum + (cls.enrolled?.length || 0), 0) }}</div>
+            <div class="text-h6">
+              {{ teacherClasses.reduce((sum, cls) => sum + (cls.enrolled?.length || 0), 0) }}
+            </div>
             <div class="text-subtitle2">Students</div>
           </q-card-section>
         </q-card>
@@ -116,8 +110,10 @@ function navigateToClass(cls: ClassModel) {
               </q-item-section>
 
               <q-item-section>
-                <q-item-label>{{ theClass.name }} - {{  theClass.section }}</q-item-label>
-                <q-item-label caption>{{ theClass.academicYear }} • {{ theClass.classCode }}</q-item-label>
+                <q-item-label>{{ theClass.name }} - {{ theClass.section }}</q-item-label>
+                <q-item-label caption
+                  >{{ theClass.academicYear }} • {{ theClass.classCode }}</q-item-label
+                >
               </q-item-section>
 
               <q-item-section side>
@@ -153,16 +149,14 @@ function navigateToClass(cls: ClassModel) {
             v-model="className"
             label="Class Name"
             :rules="[
-              v => !!v || 'Class name is required',
-              v => v.length >= 3 || 'Name must be at least 3 characters'
+              (v) => !!v || 'Class name is required',
+              (v) => v.length >= 3 || 'Name must be at least 3 characters',
             ]"
           />
           <q-input
-           v-model="classSection"
-           label="Class Section"
-           :rules="[
-              v => !!v || 'Class section is required',
-            ]"
+            v-model="classSection"
+            label="Class Section"
+            :rules="[(v) => !!v || 'Class section is required']"
           />
         </q-card-section>
 

@@ -1,5 +1,6 @@
-export interface UserModel {
-  key?: string;
+import { Entity } from './base.model';
+
+export interface UserModel extends Entity {
   fullName: string;
   email: string;
   emailVerified?: boolean;

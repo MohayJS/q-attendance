@@ -25,14 +25,14 @@ const enrolledStudentIds = ref<string[]>([]);
 
 onMounted(async () => {
   if (props.meeting.classKey) {
-    const existingClass = classStore.classes.find((c) => c.key === props.meeting.classKey);
+    const existingClass = classStore.teaching.find((c) => c.key === props.meeting.classKey);
     if (!existingClass) {
       await classStore.loadClass(props.meeting.classKey);
     }
 
-    const classData = classStore.classes.find((c) => c.key === props.meeting.classKey);
+    const classData = classStore.teaching.find((c) => c.key === props.meeting.classKey);
     if (classData?.enrolled) {
-      enrolledStudentIds.value = classData.enrolled.map((e) => e.key!);
+      enrolledStudentIds.value = classData.enrolled.map((e) => e.key);
     }
   }
 });
@@ -41,7 +41,7 @@ const checkInsWithStudentNames = computed(() => {
   if (!props.meeting.checkIns) return [];
 
   return props.meeting.checkIns.map((checkIn) => {
-    const student = usersStore.users.find((user) => user.key === checkIn.student);
+    const student = usersStore.users.find((user) => user.key === checkIn.key);
     return {
       ...checkIn,
       studentName: student?.fullName || 'Unknown Student',
@@ -52,7 +52,7 @@ const checkInsWithStudentNames = computed(() => {
 const absentStudents = computed(() => {
   if (!props.meeting.checkIns || enrolledStudentIds.value.length === 0) return [];
 
-  const checkedInStudentIds = props.meeting.checkIns.map((checkIn) => checkIn.student);
+  const checkedInStudentIds = props.meeting.checkIns.map((checkIn) => checkIn.key);
 
   return usersStore.users
     .filter(

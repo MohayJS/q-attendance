@@ -1,14 +1,14 @@
-export interface ClassMeetingModel {
-  key: string;
+import { Entity } from './base.model';
+
+export interface ClassMeetingModel extends Entity {
   classKey: string;
   date: string;
   status: 'open' | 'cancelled' | 'concluded';
   teacher: string;
-  checkIns: MeetingCheckInModel[]
+  checkIns?: MeetingCheckInModel[] | undefined,
+  checkInCount?: number;
 }
-export interface MeetingCheckInModel {
-  key: string;
-  student: string;
+export interface MeetingCheckInModel extends Entity {
   checkInTime: string;
   status: 'check-in' | 'absent' | 'late' | 'present';
   markedInTime?: string;
