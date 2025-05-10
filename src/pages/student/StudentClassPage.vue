@@ -125,8 +125,9 @@ function validateCheckInTime(classDateString: string): { valid: boolean; message
   try {
     const classDateTime = new Date(classDateString);
     const currentTime = new Date();
+    currentTime.setHours(currentTime.getHours() - 6);
 
-    if (currentTime > classDateTime) {
+    if (currentTime == classDateTime) {
       const graceEndTime = new Date(classDateTime.getTime() + 30 * 60 * 1000);
 
       if (currentTime <= graceEndTime) {
