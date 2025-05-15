@@ -62,19 +62,7 @@ function openCreateClassDialog() {
           <q-space />
 
           <div class="row items-center q-gutter-sm">
-            <q-btn flat round icon="add" color="grey-8">
-              <q-tooltip>Create or join class</q-tooltip>
-              <q-menu>
-                <q-list style="min-width: 150px">
-                  <q-item clickable v-close-popup @click="openCreateClassDialog">
-                    <q-item-section>Create class</q-item-section>
-                  </q-item>
-                  <q-item clickable v-close-popup disabled>
-                    <q-item-section>Join class</q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
+            <q-btn flat round icon="add" color="grey-8" @click="openCreateClassDialog" />
 
             <q-btn flat round>
               <q-avatar size="32px">

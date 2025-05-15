@@ -131,12 +131,6 @@ function copyInviteLink(cls: ClassModel): void {
                   <q-btn round flat color="white" icon="more_vert" size="sm" @click.stop>
                     <q-menu>
                       <q-list style="min-width: 150px">
-                        <q-item clickable v-close-popup disabled>
-                          <q-item-section avatar>
-                            <q-icon name="edit" color="primary" />
-                          </q-item-section>
-                          <q-item-section>Edit</q-item-section>
-                        </q-item>
                         <q-item clickable v-close-popup @click="copyInviteLink(theClass)">
                           <q-item-section avatar>
                             <q-icon name="content_copy" color="primary" />
